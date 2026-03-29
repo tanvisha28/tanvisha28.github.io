@@ -2,6 +2,7 @@
 
 ## Before Editing
 
+- Stay on `main` unless the user explicitly asks for a different branch.
 - Identify the owning layer:
   - content/data
   - page layout
@@ -23,6 +24,8 @@
 - Run `npm run lint`
 - Run `npm run build`
 - If the UI changed, manually verify the affected route(s)
+- For homepage edits, explicitly verify that `#contact` is present and the footer is directly below it
+- For homepage edits, verify `#projects`, `#experience`, and `#contact` hash navigation
 - Check README, AGENTS docs, and new docs for contradictions if you edited any of them
 
 ## In The Handoff Summary
@@ -31,4 +34,3 @@
 - Checks run
 - Any residual risk
 - Any follow-up that should happen in a separate task
-

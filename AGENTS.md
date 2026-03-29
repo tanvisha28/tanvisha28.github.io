@@ -13,6 +13,7 @@
 ## Start Here
 
 - Read this file first.
+- Then read [`codex_repo_index.md`](codex_repo_index.md) for Codex-facing repo invariants and the default branch policy.
 - Then open only the most relevant local instructions:
   - 3D or homepage scroll work: [`src/components/3d/AGENTS.md`](src/components/3d/AGENTS.md)
   - Route or page edits: [`src/pages/AGENTS.md`](src/pages/AGENTS.md)
@@ -33,9 +34,11 @@
 
 - Always run `npm run lint`.
 - Always run `npm run build`.
+- Stay on `main` unless the user explicitly asks for a different branch.
 - If you touched homepage layout, 3D scenes, or routing, also do a manual smoke pass in the browser:
   - Home route loads more than the navbar.
   - Scroll from hero to contact without sections clipping.
+  - Contact is followed immediately by the footer at the bottom of the homepage.
   - Hash navigation works for `#projects`, `#experience`, and `#contact`.
   - Project detail routes load and the back link returns to the homepage.
 - If you touched `portfolioData`, verify every affected section on both routes.
@@ -43,6 +46,7 @@
 ## Architecture Notes
 
 - The homepage is not a normal DOM page. It is a fixed full-screen `Canvas` with `ScrollControls`, while the actual text/content sections live inside `<Scroll html>`.
+- The homepage top-level sections are tracked in `src/pages/Home.tsx` via `data-home-scroll-section`. Keep `#contact` and the footer as the final two marked sections.
 - `ScrollControls.pages` is derived from measured HTML height in [`src/pages/Home.tsx`](src/pages/Home.tsx). Large spacing or content changes can break the scroll depth if that measurement falls out of sync.
 - `StoryScene` uses hard-coded Z positions for narrative beats. Large section order or height changes can desync the 3D motion from the HTML content.
 - `ProjectDetail` picks both accent styling and the 3D project scene from `project.type`.
@@ -107,4 +111,3 @@
 - Content/data model: [`docs/content-model.md`](docs/content-model.md)
 - Debugging runbook: [`docs/debugging-runbook.md`](docs/debugging-runbook.md)
 - Final pre-handoff checklist: [`docs/change-checklist.md`](docs/change-checklist.md)
-

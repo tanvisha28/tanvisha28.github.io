@@ -15,6 +15,20 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { motion, useIsPresent, useMotionValue } from "motion/react";
 
+const HOME_SCROLL_SECTION_ORDER = ["hero", "about", "skills", "projects", "experience", "contact", "footer"] as const;
+type HomeScrollSectionName = (typeof HOME_SCROLL_SECTION_ORDER)[number];
+const HOME_SCROLL_SECTION_SELECTOR = ":scope > [data-home-scroll-section]";
+
+function getHomeScrollSections(element: HTMLElement) {
+  return Array.from(element.querySelectorAll<HTMLElement>(HOME_SCROLL_SECTION_SELECTOR));
+}
+
+function getHomeScrollSectionNames(element: HTMLElement) {
+  return getHomeScrollSections(element)
+    .map((section) => section.dataset.homeScrollSection)
+    .filter((section): section is HomeScrollSectionName => HOME_SCROLL_SECTION_ORDER.includes(section as HomeScrollSectionName));
+}
+
 function ScrollViewportBridge({
   onReady,
 }: {
@@ -65,7 +79,7 @@ export default function Home() {
     const updatePages = () => {
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(() => {
-        const sections = Array.from(element.querySelectorAll(":scope > section"));
+        const sections = getHomeScrollSections(element);
         const measuredHeight = sections.reduce((total, section) => {
           if (!(section instanceof HTMLElement)) return total;
           return total + section.offsetHeight;
@@ -79,7 +93,7 @@ export default function Home() {
     updatePages();
     const observer = new ResizeObserver(updatePages);
     observer.observe(element);
-    Array.from(element.querySelectorAll(":scope > section")).forEach((section) => {
+    getHomeScrollSections(element).forEach((section) => {
       observer.observe(section);
     });
     window.addEventListener("resize", updatePages);
@@ -92,6 +106,37 @@ export default function Home() {
       window.clearTimeout(timeout);
     };
   }, []);
+
+  useEffect(() => {
+    const isProductionBuild = (import.meta as ImportMeta & { env?: { PROD?: boolean } }).env?.PROD ?? false;
+    if (isProductionBuild) return;
+
+    const element = containerRef.current;
+    if (!element) return;
+
+    const sectionNames = getHomeScrollSectionNames(element);
+    const missingSections = HOME_SCROLL_SECTION_ORDER.filter((sectionName) => !sectionNames.includes(sectionName));
+    const contactSection = document.getElementById("contact");
+    const lastTwoSections = sectionNames.slice(-2);
+
+    const warnings: string[] = [];
+
+    if (!contactSection) {
+      warnings.push("Missing #contact section.");
+    }
+
+    if (missingSections.length > 0) {
+      warnings.push(`Missing home scroll sections: ${missingSections.join(", ")}.`);
+    }
+
+    if (lastTwoSections[0] !== "contact" || lastTwoSections[1] !== "footer") {
+      warnings.push(`Expected the final home scroll sections to be contact -> footer, found ${lastTwoSections.join(" -> ") || "(none)"}.`);
+    }
+
+    if (warnings.length > 0) {
+      console.warn("[Home] Homepage scroll section invariant failed.", ...warnings);
+    }
+  }, [pages, scrollViewportVersion]);
 
   const scrollToSection = (sectionId: string, behavior: ScrollBehavior = "smooth") => {
     const element = document.getElementById(sectionId);
@@ -183,7 +228,12 @@ export default function Home() {
                 <Scroll html style={{ width: "100%" }}>
                   <div ref={containerRef} className="flex w-full flex-col gap-0 pointer-events-none">
                     {/* Hero */}
-                    <section ref={heroSectionRef} id="hero" className="relative px-6 pt-28 pb-12 md:pt-32 md:pb-16">
+                    <section
+                      ref={heroSectionRef}
+                      id="hero"
+                      data-home-scroll-section="hero"
+                      className="relative px-6 pt-28 pb-12 md:pt-32 md:pb-16"
+                    >
                       <div className="pointer-events-auto mx-auto flex min-h-[calc(100vh-7rem)] max-w-5xl flex-col items-center justify-center text-center">
                         <div className="relative mb-8 flex flex-col items-center">
                           <div aria-hidden className="absolute inset-x-[-20%] top-10 h-28 rounded-full bg-emerald-500/10 blur-3xl" />
@@ -250,7 +300,7 @@ export default function Home() {
                     </section>
 
                     {/* About */}
-                    <section id="about" className="px-6 py-14 md:py-20">
+                    <section id="about" data-home-scroll-section="about" className="px-6 py-14 md:py-20">
                       <div className="pointer-events-auto max-w-7xl mx-auto grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
                         <motion.div
                           initial={{ opacity: 0, y: 18 }}
@@ -301,7 +351,7 @@ export default function Home() {
                     </section>
 
                     {/* Skills */}
-                    <section id="skills" className="px-6 py-16 md:py-20">
+                    <section id="skills" data-home-scroll-section="skills" className="px-6 py-16 md:py-20">
                       <div className="pointer-events-auto max-w-7xl mx-auto">
                         <div className={`mb-10 max-w-5xl ${sectionIntroClassName}`}>
                           <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_58%)]" />
@@ -323,7 +373,7 @@ export default function Home() {
                     </section>
 
                     {/* Projects */}
-                    <section id="projects" className="px-6 py-20 md:py-24">
+                    <section id="projects" data-home-scroll-section="projects" className="px-6 py-20 md:py-24">
                       <div className="pointer-events-auto max-w-7xl mx-auto">
                         <div className={`mb-14 max-w-5xl ${sectionIntroClassName}`}>
                           <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.14),transparent_56%)]" />
@@ -341,7 +391,7 @@ export default function Home() {
                     </section>
 
                     {/* Experience */}
-                    <section id="experience" className="px-6 py-16 md:py-20">
+                    <section id="experience" data-home-scroll-section="experience" className="px-6 py-16 md:py-20">
                       <div className="pointer-events-auto w-full max-w-7xl mx-auto">
                         <div className={`mb-12 max-w-4xl ${sectionIntroClassName}`}>
                           <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_58%)]" />
@@ -363,7 +413,11 @@ export default function Home() {
                     </section>
 
                     {/* Contact */}
-                    <section id="contact" className="relative overflow-hidden px-6 pt-16 pb-14 md:pt-24 md:pb-20">
+                    <section
+                      id="contact"
+                      data-home-scroll-section="contact"
+                      className="relative overflow-hidden px-6 pt-16 pb-14 md:pt-24 md:pb-20"
+                    >
                       <div aria-hidden className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_72%_34%,rgba(16,185,129,0.14),transparent_40%)]" />
                       <div className="pointer-events-auto relative z-10 max-w-5xl mx-auto">
                         <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/[0.58] px-6 py-8 shadow-[0_0_80px_rgba(0,0,0,0.34)] backdrop-blur-xl md:px-10 md:py-10">
@@ -470,7 +524,7 @@ export default function Home() {
                       </div>
                     </section>
 
-                    <section aria-label="Footer" className="pointer-events-auto relative z-10 w-full">
+                    <section aria-label="Footer" data-home-scroll-section="footer" className="pointer-events-auto relative z-10 w-full">
                       <Footer />
                     </section>
                   </div>
