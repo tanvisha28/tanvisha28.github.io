@@ -470,9 +470,9 @@ export default function Home() {
                       </div>
                     </section>
 
-                    <div className="pointer-events-auto relative z-10 w-full">
+                    <section aria-label="Footer" className="pointer-events-auto relative z-10 w-full">
                       <Footer />
-                    </div>
+                    </section>
                   </div>
                 </Scroll>
               </ScrollControls>
