@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { ArrowRight, Bot, BrainCircuit, Database } from "lucide-react";
 import { Project, Experience, SkillGroup } from "../data/portfolioData";
@@ -102,12 +101,18 @@ export function SkillsGrid({ skills }: { skills: SkillGroup[] }) {
   );
 }
 
-export function ProjectTree({ projects }: { projects: Project[] }) {
+export function ProjectTree({
+  projects,
+  onProjectSelect,
+}: {
+  projects: Project[];
+  onProjectSelect: (projectId: string) => void;
+}) {
   return (
     <div className="relative mx-auto w-full max-w-6xl">
       <div className="absolute left-5 top-0 h-full w-px bg-white/10 md:left-1/2 md:-translate-x-1/2" />
 
-      <div className="space-y-8 md:space-y-10">
+      <div className="space-y-6 md:space-y-8">
         {projects.map((project, idx) => {
           const tone = getProjectTone(project.type);
           const Icon = tone.icon;
@@ -120,12 +125,12 @@ export function ProjectTree({ projects }: { projects: Project[] }) {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.25 }}
               transition={{ duration: 0.45, delay: idx * 0.08 }}
-              className="grid grid-cols-[40px_minmax(0,1fr)] gap-5 md:grid-cols-[minmax(0,1fr)_96px_minmax(0,1fr)] md:gap-8"
+              className="grid grid-cols-[40px_minmax(0,1fr)] gap-4 md:grid-cols-[minmax(0,1fr)_88px_minmax(0,1fr)] md:gap-6"
             >
               <div className={cn("hidden md:block", isLeft ? "order-1" : "order-3")} />
 
               <div className={cn("order-2 md:order-none", isLeft ? "md:col-start-1" : "md:col-start-3")}>
-                <article className={cn("pointer-events-auto relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 p-8 backdrop-blur-xl transition-all hover:border-white/20", tone.glow)}>
+                <article className={cn("pointer-events-auto relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 p-7 backdrop-blur-xl transition-all hover:border-white/20 md:p-8", tone.glow)}>
                   <motion.div
                     aria-hidden
                     className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent"
@@ -142,7 +147,7 @@ export function ProjectTree({ projects }: { projects: Project[] }) {
                   <p className="mb-6 text-sm font-medium uppercase tracking-[0.24em] text-gray-500">{project.domain}</p>
                   <p className="mb-8 leading-relaxed text-gray-400">{project.summary}</p>
 
-                  <div className="mb-8 flex flex-wrap gap-2">
+                  <div className="mb-7 flex flex-wrap gap-2">
                     {project.techStack.slice(0, 4).map((tech) => (
                       <span key={tech} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                         {tech}
@@ -150,22 +155,23 @@ export function ProjectTree({ projects }: { projects: Project[] }) {
                     ))}
                   </div>
 
-                  <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="mb-7 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Outcome</p>
                     <p className="text-sm leading-relaxed text-gray-300">{project.outcomes[0]}</p>
                   </div>
 
-                  <Link
-                    to={`/project/${project.id}`}
+                  <button
+                    type="button"
+                    onClick={() => onProjectSelect(project.id)}
                     className="inline-flex items-center rounded-full bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest text-black transition-all hover:bg-emerald-500 hover:text-white"
                   >
                     View Case Study <ArrowRight size={16} className="ml-2" />
-                  </Link>
+                  </button>
                 </article>
               </div>
 
               <div className="relative order-1 flex items-start justify-center md:order-none md:col-start-2">
-                <div className={cn("absolute top-7 h-px w-5 md:w-8", tone.line, isLeft ? "left-5 md:left-auto md:right-1/2" : "left-5 md:left-1/2")} />
+                <div className={cn("absolute top-7 h-px w-5 md:w-7", tone.line, isLeft ? "left-5 md:left-auto md:right-1/2" : "left-5 md:left-1/2")} />
                 <div className="relative z-10 mt-2 flex h-10 w-10 items-center justify-center rounded-full border border-white/20 bg-black shadow-[0_0_25px_rgba(255,255,255,0.08)] md:h-14 md:w-14">
                   <Icon size={18} className={cn(project.type === "AI" ? "text-blue-400" : project.type === "DE" ? "text-amber-400" : "text-purple-400", "md:h-5 md:w-5")} />
                 </div>

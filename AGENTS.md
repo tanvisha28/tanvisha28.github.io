@@ -1,0 +1,110 @@
+# AGENTS.md
+
+## Repo Overview
+
+- Stack: React 19, Vite 6, TypeScript, Tailwind CSS v4, React Router 7, Framer Motion, React Three Fiber, Drei, and `@react-three/postprocessing`.
+- Routes:
+  - `/` renders the immersive homepage in [`src/pages/Home.tsx`](src/pages/Home.tsx).
+  - `/project/:id` renders case-study detail pages in [`src/pages/ProjectDetail.tsx`](src/pages/ProjectDetail.tsx).
+- Content source of truth: [`src/data/portfolioData.ts`](src/data/portfolioData.ts).
+- 3D layer: [`src/components/3d`](src/components/3d).
+- Shared UI layer: [`src/components`](src/components).
+
+## Start Here
+
+- Read this file first.
+- Then open only the most relevant local instructions:
+  - 3D or homepage scroll work: [`src/components/3d/AGENTS.md`](src/components/3d/AGENTS.md)
+  - Route or page edits: [`src/pages/AGENTS.md`](src/pages/AGENTS.md)
+  - Portfolio content/data updates: [`src/data/AGENTS.md`](src/data/AGENTS.md)
+- Repo-local reusable playbooks live under [`docs/skills`](docs/skills). Treat them as the project-specific equivalent of local skills.
+
+## Run The App
+
+- Install: `npm install`
+- Dev server: `npm run dev`
+- Typecheck: `npm run lint`
+- Production build: `npm run build`
+- Preview build: `npm run preview`
+
+`npm run lint` is TypeScript-only today. There is no ESLint or automated browser test suite in this repo yet.
+
+## Verification Flow
+
+- Always run `npm run lint`.
+- Always run `npm run build`.
+- If you touched homepage layout, 3D scenes, or routing, also do a manual smoke pass in the browser:
+  - Home route loads more than the navbar.
+  - Scroll from hero to contact without sections clipping.
+  - Hash navigation works for `#projects`, `#experience`, and `#contact`.
+  - Project detail routes load and the back link returns to the homepage.
+- If you touched `portfolioData`, verify every affected section on both routes.
+
+## Architecture Notes
+
+- The homepage is not a normal DOM page. It is a fixed full-screen `Canvas` with `ScrollControls`, while the actual text/content sections live inside `<Scroll html>`.
+- `ScrollControls.pages` is derived from measured HTML height in [`src/pages/Home.tsx`](src/pages/Home.tsx). Large spacing or content changes can break the scroll depth if that measurement falls out of sync.
+- `StoryScene` uses hard-coded Z positions for narrative beats. Large section order or height changes can desync the 3D motion from the HTML content.
+- `ProjectDetail` picks both accent styling and the 3D project scene from `project.type`.
+
+## Editing Constraints
+
+- Preserve the current product direction: dark, cinematic, high-contrast, glassy panels, strong typography, and immersive 3D depth.
+- Do not redesign the app while doing infra or content work.
+- Prefer the smallest safe diff.
+- Prefer targeted fixes over refactors.
+- Do not add dependencies unless the task clearly requires them.
+- Keep content in `portfolioData` instead of scattering copy across components.
+- Keep 3D scenes decorative and supportive. Do not move critical content into WebGL-only rendering.
+
+## Safe Boundaries By Change Type
+
+### Homepage, 3D, and ScrollControls
+
+- Start in [`docs/skills/3d-scroll-debugging.md`](docs/skills/3d-scroll-debugging.md) or [`docs/skills/homepage-layout-fixes.md`](docs/skills/homepage-layout-fixes.md).
+- Do not split the homepage into multiple canvases or remove `ScrollControls` unless the task explicitly requires an architectural refactor.
+- Keep `pointer-events-none` on the outer HTML scroll container unless you are deliberately reworking interaction. Restore `pointer-events-auto` on interactive descendants.
+- If section order, height, or count changes materially, review:
+  - `pages` calculation in [`src/pages/Home.tsx`](src/pages/Home.tsx)
+  - Z positions and pacing in [`src/components/3d/StoryScene.tsx`](src/components/3d/StoryScene.tsx)
+- Keep `useFrame` work lean. Avoid per-frame object creation and heavy postprocessing additions.
+
+### Spacing and Layout Fixes
+
+- Prefer changing padding, gaps, and max-widths inside existing sections before changing the section stack itself.
+- On the homepage, fix spacing from the inside out:
+  - inner card padding
+  - local section gaps
+  - section `py` values
+  - section `min-height`
+- Avoid changing hero or contact min-heights unless you also verify scroll pacing.
+- When a spacing change affects perceived 3D timing, adjust the layout first and touch `StoryScene` only if the desync is still obvious.
+
+### Content and Portfolio Data
+
+- Start in [`docs/skills/content-and-portfolio-data-updates.md`](docs/skills/content-and-portfolio-data-updates.md).
+- Keep `project.id` stable. It drives routing.
+- Keep `projects` array order intentional. It drives both homepage ordering and the "Next Case Study" CTA.
+- `Project.type` is currently limited to `AI`, `DE`, and `DS`. New values require UI and 3D support in multiple files.
+- `certifications` currently are stored but not rendered.
+- `personal.resume` is used by navbar and footer. Prefer a real URL over `#`.
+
+## Preferred Debugging Approach
+
+- Start with the layer that owns the bug.
+  - Broken copy or missing case-study data: `src/data/portfolioData.ts`
+  - Homepage spacing or section visibility: `src/pages/Home.tsx`
+  - 3D pacing or WebGL issues: `src/components/3d/*`
+  - Shared nav/footer behavior: `src/components/Layout.tsx`
+- Use targeted searches with `rg`.
+- Read only the files on the change path.
+- Avoid broad cleanup while fixing a local issue.
+
+## Docs Map
+
+- Architecture overview: [`docs/architecture.md`](docs/architecture.md)
+- Frontend system and design constraints: [`docs/frontend-system.md`](docs/frontend-system.md)
+- Content/data model: [`docs/content-model.md`](docs/content-model.md)
+- Debugging runbook: [`docs/debugging-runbook.md`](docs/debugging-runbook.md)
+- Final pre-handoff checklist: [`docs/change-checklist.md`](docs/change-checklist.md)
+
