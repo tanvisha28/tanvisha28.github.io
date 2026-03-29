@@ -21,12 +21,14 @@ Check in this order:
    - `ProjectScenes.tsx`
 2. Confirm [`src/pages/Home.tsx`](../src/pages/Home.tsx) still renders:
    - the fixed black wrapper
-   - `Canvas`
+   - canvas mode when enabled
+   - DOM fallback mode when canvas is disabled
    - `ScrollControls`
    - `<Scroll html>`
 3. Confirm `portfolioData` still has all fields referenced by the homepage.
-4. If the navbar appears over a plain black background, suspect a `Canvas` render error or an exception thrown inside a scene.
-5. If some content appears but the scroll is too short, suspect `pages` measurement or a zero-height `containerRef`.
+4. If the navbar appears over a plain black background with no hero DOM content, inspect the `CanvasErrorBoundary`, `canCreateWebGLContext`, and `HomeScrollContent` path together.
+5. If the hero DOM content appears but the 3D layer does not, suspect a canvas-only error or a disabled WebGL path rather than missing route content.
+6. If some content appears but the scroll is too short, suspect `pages` measurement or a zero-height `containerRef`.
 
 ## Failure Mode: Scroll Depth Feels Wrong Or Sections Clip
 
@@ -39,15 +41,28 @@ Symptoms:
 Check:
 
 1. Did a section gain or lose a lot of height in `Home.tsx`?
-2. Does `containerRef.current.scrollHeight` still roughly match the page's actual content height?
-3. Do `StoryScene` Z anchors still match the updated pacing?
-4. Did a late-loading asset change the height after the initial `pages` calculation?
+2. Do all top-level homepage sections still have the expected `data-home-scroll-section` markers?
+3. Does the measured bottom edge of the top-level sections still roughly match the actual page height?
+4. Do the measured `sectionRanges` for `projects`, `experience`, and `contact` still line up with the intended lower-scene pacing?
+5. Did a late-loading asset change the height after the initial `pages` calculation?
 
 Fix strategy:
 
 - Adjust DOM spacing first.
 - Re-test.
 - Only adjust `StoryScene` Z positions if the DOM fix leaves the 3D pacing visibly off.
+
+## Failure Mode: Hero Background No Longer Centers On The Portrait
+
+Likely cause: the DOM-to-scene anchor path drifted.
+
+Check:
+
+1. `heroPortraitRef` in [`src/pages/Home.tsx`](../src/pages/Home.tsx) still targets the portrait wrapper and not a differently sized parent.
+2. The hero portrait dimensions or surrounding layout did not change in a way that makes the measured center misleading.
+3. `heroAnchorX` and `heroAnchorY` are still being updated from the scroll viewport measurements.
+4. [`src/components/3d/HeroScene.tsx`](../src/components/3d/HeroScene.tsx) still uses the measured world anchor directly instead of adding a hard-coded vertical bias.
+5. `StoryScene.tsx` camera positioning still treats the hero as the locked intro state at the top of the page.
 
 ## Failure Mode: Buttons Or Links Stop Working On The Homepage
 
@@ -65,8 +80,26 @@ Check:
 
 1. The target section `id` still exists in `Home.tsx`.
 2. Navbar links still point to the right hash.
-3. `ScrollToTop.tsx` only resets on pathname change, while the home page itself handles hash scrolling.
-4. The route still lands on `/` before the hash-based `scrollIntoView` runs.
+3. `ScrollViewportBridge` is still capturing the correct scroll viewport element in canvas mode.
+4. `ScrollToTop.tsx` only resets on pathname change, while the home page itself handles hash scrolling.
+5. The route still lands on `/` before the hash-based scroll runs.
+
+## Failure Mode: Sound Toggle Shows But Audio Never Starts
+
+Likely causes:
+
+- missing files in `public/audio/`
+- `SoundProvider` no longer wrapping the app
+- no user-gesture activation
+- stored preference or reduced-motion gating not behaving as expected
+
+Check:
+
+1. [`src/App.tsx`](../src/App.tsx) still wraps the router in `SoundProvider`.
+2. [`src/components/SoundToggle.tsx`](../src/components/SoundToggle.tsx) still calls `toggleSound`.
+3. The expected audio files still exist in `public/audio/`.
+4. `SoundProvider` still waits for user activation before playback and still persists the opt-in state through `SOUND_STORAGE_KEY`.
+5. Automatic section cues are not being mistaken for a full audio outage when reduced motion is enabled.
 
 ## Failure Mode: Project Detail Shows The Wrong Scene Or Accent
 

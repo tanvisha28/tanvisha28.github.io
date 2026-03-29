@@ -8,6 +8,7 @@ Use this for profile copy changes, metrics, skills, experience, project case-stu
 
 - [`src/data/portfolioData.ts`](../../src/data/portfolioData.ts)
 - [`public/profile.jpg`](../../public/profile.jpg) if the headshot changes
+- [`public/resume.pdf`](../../public/resume.pdf) if the resume asset changes
 - Occasionally:
   - [`src/pages/Home.tsx`](../../src/pages/Home.tsx)
   - [`src/pages/ProjectDetail.tsx`](../../src/pages/ProjectDetail.tsx)
@@ -26,6 +27,7 @@ Use this for profile copy changes, metrics, skills, experience, project case-stu
 2. Only touch components if the requested content requires a new rendered field.
 3. Keep strings concise enough for the existing layout.
 4. If replacing links, verify every place the link is used, especially `resume`.
+5. Keep the shared resume asset on the stable public path `/resume.pdf` unless a task explicitly changes that convention.
 
 ## Verification Checklist
 
@@ -39,3 +41,4 @@ Use this for profile copy changes, metrics, skills, experience, project case-stu
 
 - The project detail page still uses placeholder buttons for source/demo actions because the data model does not yet provide URLs.
 - The homepage image fallback points to Unsplash if `public/profile.jpg` fails to load.
+- Resume actions across the app are expected to resolve through `portfolioData.personal.resume`, which should normally point at `/resume.pdf`.

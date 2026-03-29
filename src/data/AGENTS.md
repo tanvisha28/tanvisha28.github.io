@@ -4,7 +4,7 @@ Scope: everything in `src/data`.
 
 ## Local Rules
 
-- `portfolioData.ts` is the single source of truth for homepage content, project case studies, experience, and shared personal links.
+- `portfolioData.ts` is the single source of truth for homepage content, education, project case studies, experience, and shared personal links.
 - Keep this file plain data. No JSX, hooks, rendering helpers, or cross-file imports.
 - Keep `project.id` values stable and URL-safe.
 - Keep `projects` array order intentional because it controls homepage ordering and the next-project link on detail pages.
@@ -16,8 +16,10 @@ Scope: everything in `src/data`.
   - `src/pages/ProjectDetail.tsx`
   - `src/components/HomeSections.tsx`
   - `src/components/3d/ProjectScenes.tsx`
+- `education` is rendered on the homepage. Adding or removing entries changes visible homepage content and overall scroll height.
 - `certifications` are stored but not currently displayed anywhere.
 - `public/profile.jpg` is the profile image used on the homepage. Data changes alone do not replace that asset.
+- `public/resume.pdf` is the canonical shared resume asset used by navbar, footer, and homepage resume actions.
 
 ## Required Checks After Data Edits
 

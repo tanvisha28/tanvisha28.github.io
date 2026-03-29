@@ -11,6 +11,7 @@ All user-facing portfolio content lives in [`src/data/portfolioData.ts`](../src/
 - `skills`
 - `projects`
 - `experience`
+- `education`
 - `certifications`
 
 ## `personal`
@@ -37,7 +38,7 @@ Important fields:
 Repo-specific notes:
 
 - The homepage avatar comes from [`public/profile.jpg`](../public/profile.jpg), not from `portfolioData`.
-- `resume` is linked in multiple places. Leaving it as `#` keeps placeholder behavior visible to users.
+- `resume` is linked in multiple places and should normally point at the shared asset path `/resume.pdf`.
 
 ## `metrics`
 
@@ -101,6 +102,23 @@ Rules:
 
 - Keep bullet copy short enough for card layout.
 - Skills should stay tag-friendly and not become sentence fragments.
+
+## `education`
+
+Used by the homepage education section.
+
+Required fields:
+
+- `school`
+- `degree`
+- `period`
+- `location`
+- `details`
+
+Rules:
+
+- Keep `details` concise enough to fit inside the existing card layout.
+- Fold GPA and coursework into `details` instead of introducing extra rendered fields unless the UI is intentionally expanded.
 
 ## `certifications`
 

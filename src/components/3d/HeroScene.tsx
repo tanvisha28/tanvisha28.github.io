@@ -213,7 +213,7 @@ export function HeroScene({
     );
 
     rootRef.current.position.x = THREE.MathUtils.lerp(rootRef.current.position.x, worldAnchorRef.current.x, rootPositionLerp);
-    rootRef.current.position.y = THREE.MathUtils.lerp(rootRef.current.position.y, worldAnchorRef.current.y - 0.32, rootPositionLerp);
+    rootRef.current.position.y = THREE.MathUtils.lerp(rootRef.current.position.y, worldAnchorRef.current.y, rootPositionLerp);
     rootRef.current.position.z = THREE.MathUtils.lerp(rootRef.current.position.z, targetRootZ, intro <= 0.02 ? 0.16 : 0.08);
     rootRef.current.rotation.y = THREE.MathUtils.lerp(rootRef.current.rotation.y, 0, 0.12);
     rootRef.current.rotation.x = THREE.MathUtils.lerp(rootRef.current.rotation.x, 0, 0.12);

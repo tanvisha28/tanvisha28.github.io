@@ -14,6 +14,7 @@
 
 - Read this file first.
 - Then read [`codex_repo_index.md`](codex_repo_index.md) for Codex-facing repo invariants and the default branch policy.
+- Then read [`code_repo_update.md`](code_repo_update.md) for the rolling repo-update index and contributor-facing change history.
 - Then open only the most relevant local instructions:
   - 3D or homepage scroll work: [`src/components/3d/AGENTS.md`](src/components/3d/AGENTS.md)
   - Route or page edits: [`src/pages/AGENTS.md`](src/pages/AGENTS.md)
@@ -34,6 +35,7 @@
 
 - Always run `npm run lint`.
 - Always run `npm run build`.
+- If a task changes repo-facing architecture, routes, shared contracts, debugging guidance, or workflow expectations, update [`code_repo_update.md`](code_repo_update.md) and any linked docs in the same task.
 - Stay on `main` unless the user explicitly asks for a different branch.
 - If you touched homepage layout, 3D scenes, or routing, also do a manual smoke pass in the browser:
   - Home route loads more than the navbar.
@@ -106,6 +108,7 @@
 
 ## Docs Map
 
+- Rolling repo update index: [`code_repo_update.md`](code_repo_update.md)
 - Architecture overview: [`docs/architecture.md`](docs/architecture.md)
 - Frontend system and design constraints: [`docs/frontend-system.md`](docs/frontend-system.md)
 - Content/data model: [`docs/content-model.md`](docs/content-model.md)

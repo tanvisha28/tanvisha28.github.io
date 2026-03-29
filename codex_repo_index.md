@@ -1,9 +1,10 @@
 # Codex Repo Index
 
-Read this file with `AGENTS.md` before making changes.
+Read this file with `AGENTS.md` and [`code_repo_update.md`](code_repo_update.md) before making changes.
 
 ## Quick Repo Map
 
+- Rolling repo update index: `code_repo_update.md`
 - App shell and shared nav/footer: `src/components/Layout.tsx`
 - Homepage route and scroll contract: `src/pages/Home.tsx`
 - Homepage 3D layer: `src/components/3d`
@@ -16,6 +17,7 @@ Read this file with `AGENTS.md` before making changes.
 - Stay on `main` unless the user explicitly asks for a different branch.
 - Make the smallest safe diff.
 - Do not redesign unrelated parts of the site while fixing a localized issue.
+- If a change alters contributor-facing repo behavior or structure, update `code_repo_update.md` and the affected docs in the same task.
 - Run `npm run lint` and `npm run build` after edits.
 
 ## Homepage Architecture
@@ -44,6 +46,7 @@ Read this file with `AGENTS.md` before making changes.
 
 - `npm run lint`
 - `npm run build`
+- `code_repo_update.md` and linked docs reflect any repo-facing contract changes from the task
 - Manual homepage smoke pass:
   - hero to contact scroll works
   - footer is visible directly below contact
@@ -55,7 +58,7 @@ Read this file with `AGENTS.md` before making changes.
 ## Reusable Codex Prompt
 
 ```text
-Read AGENTS.md and codex_repo_index.md first. Work on main unless explicitly told otherwise. This homepage is a ScrollControls + Scroll html app, not a normal DOM page.
+Read AGENTS.md, codex_repo_index.md, and code_repo_update.md first. Work on main unless explicitly told otherwise. This homepage is a ScrollControls + Scroll html app, not a normal DOM page.
 
 Treat these as non-negotiable invariants:
 1. #contact and footer must remain the last two top-level homepage scroll sections in Home.tsx.

@@ -11,12 +11,28 @@ import { portfolioData } from "../data/portfolioData";
 import { SDEScene, DEScene, DSScene } from "../components/3d/ProjectScenes";
 import { SceneLights, AmbientParticles } from "../components/3d/Common";
 import { Layout, Footer } from "../components/Layout";
-import { useEffect } from "react";
+import { useEffect, ReactNode } from "react";
+import { useSoundInteractions } from "../audio/useSoundInteractions";
+
+function ScrollReveal({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const project = portfolioData.projects.find((p) => p.id === id);
+  const { withClickSound, withHoverSound } = useSoundInteractions();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -35,7 +51,7 @@ export default function ProjectDetail() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       <Layout>
         {/* Project Hero */}
@@ -54,7 +70,11 @@ export default function ProjectDetail() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <Link to="/#projects" className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-8 text-sm font-bold uppercase tracking-widest">
+            <Link
+              to="/#projects"
+              onClick={withClickSound()}
+              className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-8 text-sm font-bold uppercase tracking-widest"
+            >
               <ArrowLeft size={16} className="mr-2" /> Back to Projects
             </Link>
             <h1 className="text-5xl md:text-8xl font-bold text-white tracking-tighter mb-6 leading-none">
@@ -103,7 +123,7 @@ export default function ProjectDetail() {
             {/* Main Content */}
             <div className="lg:col-span-8 space-y-32">
               {/* Context & Problem */}
-              <div className="space-y-12">
+              <ScrollReveal className="space-y-12">
                 <div className="space-y-6">
                   <div className="flex items-center space-x-4 text-emerald-400">
                     <AlertCircle size={24} />
@@ -118,10 +138,10 @@ export default function ProjectDetail() {
                   </div>
                   <p className="text-gray-400 text-lg leading-relaxed">{project.context}</p>
                 </div>
-              </div>
+              </ScrollReveal>
 
               {/* Architecture & Flow */}
-              <div className="space-y-12">
+              <ScrollReveal className="space-y-12">
                 <div className="space-y-6">
                   <div className="flex items-center space-x-4 text-emerald-400">
                     <Layers size={24} />
@@ -146,10 +166,10 @@ export default function ProjectDetail() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
 
               {/* Implementation Details */}
-              <div className="space-y-12">
+              <ScrollReveal className="space-y-12">
                 <div className="space-y-6">
                   <div className="flex items-center space-x-4 text-emerald-400">
                     <Workflow size={24} />
@@ -163,10 +183,10 @@ export default function ProjectDetail() {
                     ))}
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
 
               {/* Outcomes & Impact */}
-              <div className="space-y-12">
+              <ScrollReveal className="space-y-12">
                 <div className="space-y-6">
                   <div className="flex items-center space-x-4 text-emerald-400">
                     <Zap size={24} />
@@ -181,11 +201,11 @@ export default function ProjectDetail() {
                     ))}
                   </div>
                 </div>
-              </div>
+              </ScrollReveal>
             </div>
 
             {/* Sidebar / Meta */}
-            <div className="lg:col-span-4 space-y-12">
+            <ScrollReveal className="lg:col-span-4 space-y-12">
               <div className="sticky top-32 space-y-12">
                 <div className="p-8 bg-zinc-900/50 border border-white/10 rounded-2xl">
                   <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-6">Goals</h4>
@@ -224,15 +244,25 @@ export default function ProjectDetail() {
                 </div>
 
                 <div className="flex flex-col space-y-4">
-                  <button className="w-full py-4 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-full hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center">
+                  <button
+                    onClick={withClickSound()}
+                    onMouseEnter={withHoverSound(`detail-source-${project.id}`)}
+                    onFocus={withHoverSound(`detail-source-${project.id}`)}
+                    className="w-full py-4 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-full hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center"
+                  >
                     <Github size={18} className="mr-2" /> View Source Code
                   </button>
-                  <button className="w-full py-4 border border-white/20 text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-white/5 transition-all flex items-center justify-center">
+                  <button
+                    onClick={withClickSound()}
+                    onMouseEnter={withHoverSound(`detail-demo-${project.id}`)}
+                    onFocus={withHoverSound(`detail-demo-${project.id}`)}
+                    className="w-full py-4 border border-white/20 text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-white/5 transition-all flex items-center justify-center"
+                  >
                     <ExternalLink size={18} className="mr-2" /> Live Demo
                   </button>
                 </div>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
         </div>
       </section>
@@ -243,6 +273,7 @@ export default function ProjectDetail() {
           <span className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4 block">Next Case Study</span>
           <Link 
             to={`/project/${portfolioData.projects[(portfolioData.projects.findIndex(p => p.id === id) + 1) % portfolioData.projects.length].id}`}
+            onClick={withClickSound()}
             className="text-4xl md:text-6xl font-bold text-white hover:text-emerald-400 transition-colors tracking-tighter"
           >
             {portfolioData.projects[(portfolioData.projects.findIndex(p => p.id === id) + 1) % portfolioData.projects.length].title}

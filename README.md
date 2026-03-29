@@ -51,6 +51,7 @@ That coupling is the main source of both the experience quality and the repo's l
 Start here for future work:
 
 - Root repo instructions: [`AGENTS.md`](AGENTS.md)
+- Rolling repo update index: [`code_repo_update.md`](code_repo_update.md)
 - Contributor workflow: [`CONTRIBUTING.md`](CONTRIBUTING.md)
 - Architecture: [`docs/architecture.md`](docs/architecture.md)
 - Frontend system: [`docs/frontend-system.md`](docs/frontend-system.md)
@@ -74,6 +75,21 @@ Minimum for any meaningful change:
 - `npm run build`
 
 If the UI changed, also manually verify the homepage scroll flow and any affected project detail pages.
+
+## Audio Setup
+
+Place these files under `public/audio/`:
+
+- `ambient-loop.mp3`
+- `choir-hit.mp3`
+- `hero-hum.mp3`
+- `ui-click.mp3`
+- `ui-hover.mp3`
+- `section-sweep.mp3`
+
+The cinematic sound layer lives in `src/audio/` and is wired through `SoundProvider`, `useSound`, and the central `soundRegistry`. Audio stays off by default, initializes lazily after opt-in, keeps ambient playback limited to the homepage, and uses IntersectionObserver-based triggers for major section beats and large reveal moments instead of raw scroll events.
+
+To retune the system later, update `src/audio/soundConfig.ts` for per-sound volume, ambient fade timings, ducking levels, and cooldowns. The provider in `src/audio/SoundProvider.tsx` owns preference persistence, reduced-motion behavior, homepage soundscape activation, and visibility pause/resume handling.
 
 ## Notes On Environment And AI Studio Remnants
 

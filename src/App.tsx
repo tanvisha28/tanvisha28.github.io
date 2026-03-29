@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import ProjectDetail from "./pages/ProjectDetail";
 import { AnimatePresence } from "motion/react";
 import ScrollToTop from "./components/ScrollToTop";
+import { SoundProvider } from "./audio/SoundProvider";
 
 function AppRoutes() {
   const location = useLocation();
@@ -23,9 +24,11 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <Router>
-      <ScrollToTop />
-      <AppRoutes />
-    </Router>
+    <SoundProvider>
+      <Router>
+        <ScrollToTop />
+        <AppRoutes />
+      </Router>
+    </SoundProvider>
   );
 }

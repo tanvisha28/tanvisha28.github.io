@@ -7,6 +7,7 @@ Use this before handing off a change, opening a PR, or merging any update that t
 ## Files Usually Involved
 
 - The files you changed
+- [`code_repo_update.md`](../../code_repo_update.md) if the repo contract or contributor guidance changed
 - [`README.md`](../../README.md) if contributor-facing behavior changed
 - [`AGENTS.md`](../../AGENTS.md) or docs if workflow guidance changed
 
@@ -21,13 +22,15 @@ Use this before handing off a change, opening a PR, or merging any update that t
 1. Run `npm run lint`.
 2. Run `npm run build`.
 3. Manually review the affected routes.
-4. If docs changed, do a contradiction pass across README, AGENTS, and the edited docs.
-5. Summarize any residual risk instead of implying certainty.
+4. If the task changed repo-facing behavior or structure, update `code_repo_update.md`.
+5. If docs changed, do a contradiction pass across `code_repo_update.md`, README, AGENTS, and the edited docs.
+6. Summarize any residual risk instead of implying certainty.
 
 ## Verification Checklist
 
 - `npm run lint`
 - `npm run build`
+- `code_repo_update.md` reflects any repo-facing contract changes from the task
 - Home route loads and scrolls correctly
 - Edited `/project/:id` routes load correctly
 - Navbar links and back links behave correctly
