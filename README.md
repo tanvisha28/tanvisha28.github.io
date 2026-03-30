@@ -15,7 +15,23 @@ Useful commands:
 - `npm run dev`: local development server on port `3000`
 - `npm run lint`: TypeScript typecheck
 - `npm run build`: production build
+- `npm run build:pages`: production build for GitHub Pages, including `404.html` and `.nojekyll`
 - `npm run preview`: preview the built app
+
+## GitHub Pages Deployment
+
+This repo is configured for GitHub Pages project-site hosting at:
+
+- `https://makkinaganesh25.github.io/tanvisha/`
+
+Production builds use a Vite base path of `/tanvisha/`, and the app router uses the same base at runtime. Public assets such as the profile image, resume, and optional audio files are resolved through that base path so they continue to work from the project-site URL.
+
+For GitHub Pages builds, use:
+
+1. `npm run lint`
+2. `npm run build:pages`
+
+`build:pages` also creates `dist/404.html` for SPA route refreshes on project detail pages and `dist/.nojekyll` for static hosting compatibility.
 
 ## Current Stack
 

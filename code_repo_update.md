@@ -49,3 +49,8 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 - Standardized the shared resume asset to `public/resume.pdf` and updated the personal contact/link data in `portfolioData.personal`.
 - Switched shared email actions from `mailto:` to Gmail compose URLs so homepage and footer contact links open reliably in-browser.
 - Rewrote the portfolio content around the uploaded resume, added a visible homepage education section, and replaced the placeholder case studies with resume-grounded narratives while preserving existing project ids.
+- Added GitHub Pages project-site deployment support for `https://makkinaganesh25.github.io/tanvisha/`:
+  - Vite production base path is `/tanvisha/`
+  - the router uses the Pages base path at runtime
+  - shared public assets and audio now resolve through the current base path
+  - `npm run build:pages` generates `dist/404.html` and `.nojekyll` for Pages hosting

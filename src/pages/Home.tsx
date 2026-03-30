@@ -19,6 +19,7 @@ import { majorHomeSections } from "../audio/soundConfig";
 import { useSound } from "../audio/useSound";
 import { useSoundInteractions, type SoundInteractionHandlers } from "../audio/useSoundInteractions";
 import { getEmailComposeUrl } from "../utils/contact";
+import { withBasePath } from "../utils/publicAsset";
 
 const HOME_SCROLL_SECTION_ORDER = ["hero", "about", "skills", "projects", "experience", "education", "contact", "footer"] as const;
 type HomeScrollSectionName = (typeof HOME_SCROLL_SECTION_ORDER)[number];
@@ -41,7 +42,7 @@ function clamp01(value: number) {
 function measureSceneSectionRange(
   container: HTMLElement,
   scrollViewport: HTMLDivElement,
-  sectionName: "projects" | "experience" | "contact",
+  sectionName: "projects" | "experience" | "education" | "contact",
   fallback: SectionRange
 ) {
   const section = container.querySelector<HTMLElement>(`[data-home-scroll-section="${sectionName}"]`);
@@ -59,6 +60,7 @@ function measureHomeSceneRanges(container: HTMLElement, scrollViewport: HTMLDivE
   return {
     projects: measureSceneSectionRange(container, scrollViewport, "projects", defaultHomeSceneRanges.projects),
     experience: measureSceneSectionRange(container, scrollViewport, "experience", defaultHomeSceneRanges.experience),
+    education: measureSceneSectionRange(container, scrollViewport, "education", defaultHomeSceneRanges.education),
     contact: measureSceneSectionRange(container, scrollViewport, "contact", defaultHomeSceneRanges.contact),
   };
 }
@@ -202,7 +204,7 @@ function HomeScrollContent({
               <div aria-hidden className="absolute inset-[-56px] rounded-full bg-[radial-gradient(circle,rgba(52,211,153,0.14),transparent_70%)] blur-[72px]" />
               <div className="relative h-40 w-40 overflow-hidden rounded-full border-4 border-white/10 shadow-[0_0_40px_rgba(52,211,153,0.15)] md:h-52 md:w-52">
                 <img
-                  src="/profile.jpg"
+                  src={withBasePath("profile.jpg")}
                   alt={portfolioData.personal.name}
                   className="h-full w-full object-cover"
                   onError={(e) => {
@@ -263,51 +265,77 @@ function HomeScrollContent({
 
       {/* About */}
       <section id="about" data-home-scroll-section="about" className="px-6 py-14 md:py-20">
-        <div className="pointer-events-auto max-w-7xl mx-auto grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <motion.div
-            initial={false}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={motionViewportRoot ? { once: true, amount: 0.3, root: motionViewportRoot } : { once: true, amount: 0.3 }}
-            transition={{ duration: 0.45 }}
-            className="rounded-3xl border border-white/10 bg-black/40 p-8 md:p-10 backdrop-blur-md"
-          >
-            <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">
-              About Me
-            </span>
-            <h2 className="text-4xl md:text-6xl font-bold text-white tracking-tighter mb-6">
-              Building reliable data platforms from raw signals to usable decisions.
-            </h2>
-            <div className="space-y-5 text-base md:text-lg text-gray-400 leading-relaxed">
-              {portfolioData.personal.about.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-            <div className="mt-8 flex flex-wrap gap-3">
-              {portfolioData.personal.focusAreas.map((area) => (
-                <span
-                  key={area}
-                  className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.24em] text-gray-300"
-                >
-                  {area}
-                </span>
-              ))}
-            </div>
-          </motion.div>
+        <div className="pointer-events-auto mx-auto max-w-7xl">
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/[0.5] shadow-[0_0_70px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.12),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.08),transparent_34%)]" />
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {portfolioData.metrics.map((metric, idx) => (
+            <div className="relative grid gap-8 px-6 py-8 md:px-8 md:py-10 lg:grid-cols-[minmax(0,1.32fr)_minmax(320px,0.9fr)] lg:gap-8 lg:px-10">
               <motion.div
-                key={metric.label}
                 initial={false}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={motionViewportRoot ? { once: true, amount: 0.4, root: motionViewportRoot } : { once: true, amount: 0.4 }}
-                transition={{ duration: 0.35, delay: idx * 0.08 }}
-                className="rounded-3xl border border-white/10 bg-black/40 p-6 md:p-8 backdrop-blur-md"
+                viewport={motionViewportRoot ? { once: true, amount: 0.3, root: motionViewportRoot } : { once: true, amount: 0.3 }}
+                transition={{ duration: 0.45 }}
+                className="lg:pr-8"
               >
-                <div className="text-3xl md:text-4xl font-bold text-white mb-2">{metric.value}</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{metric.label}</div>
+                <span className="mb-4 block text-xs font-bold uppercase tracking-widest text-emerald-400">
+                  About Me
+                </span>
+                <h2 className="mb-6 max-w-4xl text-4xl font-bold tracking-tighter text-white md:text-5xl xl:text-[4.25rem] xl:leading-[0.94]">
+                  Building reliable data platforms from raw signals to usable decisions.
+                </h2>
+                <div className="max-w-3xl space-y-4 text-base leading-relaxed text-gray-400 md:text-lg">
+                  {portfolioData.personal.about.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
               </motion.div>
-            ))}
+
+              <motion.aside
+                initial={false}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={motionViewportRoot ? { once: true, amount: 0.35, root: motionViewportRoot } : { once: true, amount: 0.35 }}
+                transition={{ duration: 0.4, delay: 0.08 }}
+                className="lg:border-l lg:border-white/8 lg:pl-8"
+              >
+                <div className="flex h-full flex-col gap-6 lg:justify-between">
+                  <div>
+                    <span className="block text-[10px] font-bold uppercase tracking-[0.26em] text-gray-500">
+                      Impact Snapshot
+                    </span>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {portfolioData.metrics.map((metric, idx) => (
+                        <motion.div
+                          key={metric.label}
+                          initial={false}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={motionViewportRoot ? { once: true, amount: 0.4, root: motionViewportRoot } : { once: true, amount: 0.4 }}
+                          transition={{ duration: 0.35, delay: idx * 0.08 }}
+                          className="flex min-h-[118px] flex-col justify-between rounded-[1.5rem] border border-white/10 bg-black/35 p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)] backdrop-blur-md md:min-h-[128px] md:p-5"
+                        >
+                          <div className="text-3xl font-bold tracking-tight text-white md:text-4xl">{metric.value}</div>
+                          <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-gray-500">{metric.label}</div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-md md:p-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-gray-500">Focus Areas</p>
+                    <div className="mt-4 flex flex-wrap gap-2.5">
+                      {portfolioData.personal.focusAreas.map((area) => (
+                        <span
+                          key={area}
+                          className="rounded-full border border-white/10 bg-black/25 px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-gray-300"
+                        >
+                          {area}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </motion.aside>
+            </div>
           </div>
         </div>
       </section>

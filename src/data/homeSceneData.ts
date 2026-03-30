@@ -6,10 +6,11 @@ export interface SectionRange {
 export interface HomeSceneRanges {
   projects: SectionRange;
   experience: SectionRange;
+  education: SectionRange;
   contact: SectionRange;
 }
 
-export type SceneTone = "emerald" | "blue" | "amber";
+export type SceneTone = "emerald" | "blue" | "amber" | "scarlet";
 
 export interface SceneLane {
   points: [number, number, number][];
@@ -49,7 +50,8 @@ export interface SceneHalo {
 export const defaultHomeSceneRanges: HomeSceneRanges = {
   projects: { start: 0.42, end: 0.62 },
   experience: { start: 0.6, end: 0.79 },
-  contact: { start: 0.77, end: 0.93 },
+  education: { start: 0.75, end: 0.88 },
+  contact: { start: 0.85, end: 0.98 },
 };
 
 export const homeSceneTuning = {
@@ -211,6 +213,68 @@ export const homeSceneData = {
       { position: [0.82, 0.78, 1.62], rotation: [1.18, 0.22, 0.16], radius: 2.4, tone: "emerald" },
       { position: [2.36, 0.24, 2.98], rotation: [1.32, -0.16, -0.12], radius: 1.84, tone: "blue" },
     ] satisfies SceneHalo[],
+  },
+  education: {
+    focalOffset: [0.15, -0.46, 0] as const,
+    shipOffset: [0.15, -0.12, -4.2] as const,
+    shipRotation: [0.08, -0.24, -0.06] as const,
+    latticePlanes: [
+      { position: [0.2, 0.18, -12.5], rotation: [1.18, 0.16, 0.08], size: [9.2, 3.8], tone: "scarlet" },
+    ] satisfies SceneFramePlane[],
+    halos: [
+      { position: [0.35, 0.42, -18.5], rotation: [1.14, 0.12, 0.06], radius: 4.8, tone: "scarlet" },
+      { position: [-0.12, -0.26, -6.5], rotation: [1.28, -0.08, -0.12], radius: 3.2, tone: "emerald" },
+    ] satisfies SceneHalo[],
+    ribbons: [
+      {
+        points: [
+          [-1.85, -0.44, -26.2],
+          [-1.45, -0.16, -18.2],
+          [-0.96, 0.28, -10.4],
+          [-0.4, 0.78, -2.7],
+          [0.6, 1.42, 6.2],
+        ],
+        tone: "scarlet",
+        radius: 0.02,
+        packetOffsets: [0.22, 0.68],
+        packetSpeed: 0.014,
+        emphasis: "primary",
+      },
+      {
+        points: [
+          [2.5, -0.52, -25.8],
+          [1.8, -0.18, -17.8],
+          [1.18, 0.24, -9.9],
+          [0.38, 0.68, -2.2],
+          [-0.62, 1.18, 6.6],
+        ],
+        tone: "emerald",
+        radius: 0.024,
+        packetOffsets: [0.15, 0.7],
+        packetSpeed: 0.012,
+        emphasis: "support",
+      },
+      {
+        points: [
+          [0.2, -0.96, -24.1],
+          [0.24, -0.48, -16.6],
+          [0.28, 0.12, -8.4],
+          [0.18, 0.58, -0.9],
+          [-0.18, 1.18, 8.8],
+        ],
+        tone: "scarlet",
+        radius: 0.015,
+        packetOffsets: [0.4, 0.85],
+        packetSpeed: 0.016,
+        emphasis: "support",
+      },
+    ] satisfies SceneLane[],
+    nodes: [
+      [-3.8, 1.2, -22.1],
+      [3.55, 0.84, -18.8],
+      [-2.45, -0.68, -11.4],
+      [2.62, -0.92, -6.6],
+    ] as const,
   },
   contact: {
     focalOffset: [0, -0.6, 0] as const,

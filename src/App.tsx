@@ -10,6 +10,8 @@ import { AnimatePresence } from "motion/react";
 import ScrollToTop from "./components/ScrollToTop";
 import { SoundProvider } from "./audio/SoundProvider";
 
+const routerBase = import.meta.env.BASE_URL === "/" ? "/" : import.meta.env.BASE_URL.replace(/\/$/, "");
+
 function AppRoutes() {
   const location = useLocation();
   return (
@@ -25,7 +27,7 @@ function AppRoutes() {
 export default function App() {
   return (
     <SoundProvider>
-      <Router>
+      <Router basename={routerBase}>
         <ScrollToTop />
         <AppRoutes />
       </Router>

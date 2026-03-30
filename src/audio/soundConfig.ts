@@ -1,3 +1,5 @@
+import { withBasePath } from "../utils/publicAsset";
+
 export const SOUND_STORAGE_KEY = "portfolio-sound-enabled";
 
 export type SoundCue =
@@ -21,32 +23,32 @@ export interface SoundConfigEntry {
 
 export const soundRegistry: Record<SoundCue, SoundConfigEntry> = {
   ambient: {
-    src: "/audio/ambient-loop.mp3",
+    src: withBasePath("audio/ambient-loop.mp3"),
     volume: 0.065,
     loop: true,
     fadeInMs: 1500,
     fadeOutMs: 400,
   },
   choirHit: {
-    src: "/audio/choir-hit.mp3",
+    src: withBasePath("audio/choir-hit.mp3"),
     volume: 0.12,
     cooldownMs: 2500,
   },
   heroHum: {
-    src: "/audio/hero-hum.mp3",
+    src: withBasePath("audio/hero-hum.mp3"),
     volume: 0.08,
   },
   uiClick: {
-    src: "/audio/ui-click.mp3",
+    src: withBasePath("audio/ui-click.mp3"),
     volume: 0.1,
   },
   uiHover: {
-    src: "/audio/ui-hover.mp3",
+    src: withBasePath("audio/ui-hover.mp3"),
     volume: 0.085,
     cooldownMs: 1400,
   },
   sectionSweep: {
-    src: "/audio/section-sweep.mp3",
+    src: withBasePath("audio/section-sweep.mp3"),
     volume: 0.08,
     cooldownMs: 1600,
   },

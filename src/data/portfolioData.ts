@@ -70,6 +70,8 @@ export interface PortfolioData {
   }[];
 }
 
+const basePublicPath = import.meta.env.BASE_URL || "/";
+
 export const portfolioData: PortfolioData = {
   personal: {
     name: "Tanvisha Kose",
@@ -88,7 +90,7 @@ export const portfolioData: PortfolioData = {
     email: "tankose411@gmail.com",
     linkedin: "https://www.linkedin.com/in/tanvisha-kose411/",
     github: "https://github.com/tanvisha28",
-    resume: "/resume.pdf",
+    resume: `${basePublicPath}resume.pdf`,
     location: "New Brunswick, NJ",
   },
   metrics: [

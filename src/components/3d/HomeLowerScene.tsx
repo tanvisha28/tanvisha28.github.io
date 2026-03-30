@@ -1,5 +1,5 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { useScroll } from "@react-three/drei";
+import { useScroll, Sparkles } from "@react-three/drei";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import {
@@ -16,12 +16,14 @@ const TONE_COLORS: Record<SceneTone, string> = {
   emerald: "#34d399",
   blue: "#38bdf8",
   amber: "#fbbf24",
+  scarlet: "#e11d48",
 };
 
 const TONE_RGB: Record<SceneTone, string> = {
   emerald: "52,211,153",
   blue: "56,189,248",
   amber: "251,191,36",
+  scarlet: "225,29,72",
 };
 
 type OpacityMaterial = THREE.Material & { opacity: number; transmission?: number };
@@ -118,6 +120,75 @@ function createLabelTexture(label: string, tone: SceneTone) {
   return { texture, aspect: canvas.width / canvas.height };
 }
 
+function createHullBrandTexture(label: string, tone: SceneTone, sublabel?: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1400;
+  canvas.height = 320;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    const fallbackTexture = new THREE.CanvasTexture(canvas);
+    return { texture: fallbackTexture, aspect: canvas.width / canvas.height };
+  }
+
+  const toneRgb = TONE_RGB[tone];
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  const panelGradient = context.createLinearGradient(0, 0, canvas.width, 0);
+  panelGradient.addColorStop(0, "rgba(5, 7, 10, 0.0)");
+  panelGradient.addColorStop(0.08, "rgba(5, 7, 10, 0.82)");
+  panelGradient.addColorStop(0.92, "rgba(5, 7, 10, 0.82)");
+  panelGradient.addColorStop(1, "rgba(5, 7, 10, 0.0)");
+
+  drawRoundedRect(context, 18, 34, canvas.width - 36, canvas.height - 68, 46);
+  context.fillStyle = panelGradient;
+  context.fill();
+  context.strokeStyle = `rgba(${toneRgb}, 0.3)`;
+  context.lineWidth = 4;
+  context.stroke();
+
+  context.strokeStyle = `rgba(${toneRgb}, 0.12)`;
+  context.lineWidth = 6;
+  for (let offset = -220; offset < canvas.width + 220; offset += 86) {
+    context.beginPath();
+    context.moveTo(offset, 50);
+    context.lineTo(offset + 120, canvas.height - 50);
+    context.stroke();
+  }
+
+  context.fillStyle = `rgba(${toneRgb}, 0.22)`;
+  context.fillRect(64, 58, 264, 18);
+  context.fillRect(canvas.width - 328, canvas.height - 76, 264, 16);
+
+  context.beginPath();
+  context.arc(76, canvas.height / 2, 13, 0, Math.PI * 2);
+  context.fillStyle = `rgba(${toneRgb}, 0.95)`;
+  context.fill();
+
+  context.textAlign = "left";
+  context.textBaseline = "middle";
+  context.shadowColor = `rgba(${toneRgb}, 0.2)`;
+  context.shadowBlur = 24;
+  context.font = "700 88px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+  context.fillStyle = "rgba(244, 246, 247, 0.97)";
+  context.fillText(label.toUpperCase(), 118, canvas.height / 2 - 14);
+
+  if (sublabel) {
+    context.font = "600 26px system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
+    context.letterSpacing = "4px";
+    context.fillStyle = `rgba(${toneRgb}, 0.84)`;
+    context.fillText(sublabel.toUpperCase(), 122, canvas.height / 2 + 54);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.generateMipmaps = false;
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  return { texture, aspect: canvas.width / canvas.height };
+}
+
 function useMaterialRegistry() {
   const materialsRef = useRef<OpacityMaterial[]>([]);
 
@@ -176,6 +247,9 @@ function useSceneProfile() {
       experienceNodes: simplified ? 4 : tablet ? 5 : homeSceneData.experience.nodes.length,
       experienceConnections: simplified ? 4 : tablet ? 6 : homeSceneData.experience.connections.length,
       experiencePacketsPerRail: simplified ? 0 : tablet ? 1 : 2,
+      educationRibbons: simplified ? 1 : tablet ? 2 : homeSceneData.education.ribbons.length,
+      educationNodes: simplified ? 2 : tablet ? 3 : homeSceneData.education.nodes.length,
+      educationPackets: simplified ? 0 : tablet ? 1 : 2,
       contactParticles: simplified ? 5 : tablet ? 7 : homeSceneData.contact.particles.length,
       simplified,
       tablet,
@@ -209,6 +283,113 @@ function LabelSprite({
         toneMapped={false}
       />
     </sprite>
+  );
+}
+
+function BrandPlate({
+  label,
+  position,
+  tone,
+  opacity,
+  size,
+  rotation,
+  sublabel,
+  registerMaterial,
+}: {
+  label: string;
+  position: [number, number, number];
+  tone: SceneTone;
+  opacity: number;
+  size: [number, number];
+  rotation?: [number, number, number];
+  sublabel?: string;
+  registerMaterial: (material: OpacityMaterial | null) => void;
+}) {
+  const { texture } = useMemo(() => createHullBrandTexture(label, tone, sublabel), [label, tone, sublabel]);
+
+  useEffect(() => () => texture.dispose(), [texture]);
+
+  return (
+    <group position={position} rotation={rotation}>
+      <mesh position={[0, 0, -0.03]}>
+        <boxGeometry args={[size[0], size[1], 0.055]} />
+        <meshPhysicalMaterial
+          ref={registerMaterial}
+          color="#090b10"
+          metalness={0.42}
+          roughness={0.36}
+          transmission={0.12}
+          thickness={0.08}
+          transparent
+          opacity={Math.min(0.52, opacity)}
+          emissive="#19090f"
+          emissiveIntensity={0.45}
+        />
+      </mesh>
+      <mesh>
+        <planeGeometry args={size} />
+        <meshBasicMaterial
+          ref={registerMaterial}
+          map={texture}
+          transparent
+          opacity={opacity}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function ThrusterFlare({
+  position,
+  tone,
+  scale,
+  registerMaterial,
+}: {
+  position: [number, number, number];
+  tone: SceneTone;
+  scale: number;
+  registerMaterial: (material: OpacityMaterial | null) => void;
+}) {
+  return (
+    <group position={position}>
+      <mesh scale={[scale, scale, scale]}>
+        <sphereGeometry args={[0.14, 20, 20]} />
+        <meshBasicMaterial
+          ref={registerMaterial}
+          color={TONE_COLORS[tone]}
+          transparent
+          opacity={0.88}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+      <mesh position={[0, 0, -0.52 * scale]} rotation={[Math.PI / 2, 0, 0]}>
+        <coneGeometry args={[0.14 * scale, 1.1 * scale, 18, 1, true]} />
+        <meshBasicMaterial
+          ref={registerMaterial}
+          color={TONE_COLORS[tone]}
+          transparent
+          opacity={0.18}
+          depthWrite={false}
+          toneMapped={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      <mesh rotation={[Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.13 * scale, 0.22 * scale, 32]} />
+        <meshBasicMaterial
+          ref={registerMaterial}
+          color={TONE_COLORS[tone]}
+          transparent
+          opacity={0.26}
+          depthWrite={false}
+          toneMapped={false}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+    </group>
   );
 }
 
@@ -814,6 +995,390 @@ function ExperienceSystemsField({
   );
 }
 
+// --- RUTGERS EDUCATION SCENE ---
+
+function EngineWake({
+  tone,
+  registerMaterial,
+}: {
+  tone: SceneTone;
+  registerMaterial: (material: OpacityMaterial | null) => void;
+}) {
+  const wakeRef = useRef<THREE.Group>(null!);
+  useFrame((state) => {
+    if (!wakeRef.current) return;
+    const t = state.clock.getElapsedTime();
+    wakeRef.current.scale.x = 1 + Math.sin(t * 12) * 0.05;
+    wakeRef.current.scale.y = 1 + Math.sin(t * 15 + 1) * 0.05;
+  });
+
+  return (
+    <group ref={wakeRef}>
+      <mesh position={[0, 0, -2.5]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.08, 0.45, 5, 12, 1, true]} />
+        <meshBasicMaterial
+          ref={registerMaterial}
+          color={TONE_COLORS[tone]}
+          transparent
+          opacity={0.12}
+          depthWrite={false}
+          toneMapped={false}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+      <mesh position={[0, 0, -0.5]}>
+        <sphereGeometry args={[0.2, 12, 12]} />
+        <meshBasicMaterial
+          ref={registerMaterial}
+          color={TONE_COLORS[tone]}
+          transparent
+          opacity={0.6}
+          depthWrite={false}
+          toneMapped={false}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+function EducationSpacecraft({
+  flightProgress,
+  simplified,
+  registerSceneMaterial,
+}: {
+  flightProgress: number;
+  simplified: boolean;
+  registerSceneMaterial: (material: OpacityMaterial | null) => void;
+}) {
+  const coreRef = useRef<THREE.Group>(null!);
+
+  useFrame((state) => {
+    if (coreRef.current) {
+      coreRef.current.position.y = Math.sin(state.clock.getElapsedTime() * 1.5) * 0.05;
+    }
+  });
+
+  return (
+    <group ref={coreRef}>
+      {/* Outer Monolithic Glass Hull */}
+      <mesh rotation={[Math.PI / 2, Math.PI / 4, 0]} scale={[1.8, 4.0, 0.45]}>
+        <coneGeometry args={[2.5, 6, 4]} />
+        <meshPhysicalMaterial
+          ref={registerSceneMaterial}
+          color="#030406"
+          transmission={0.97}
+          ior={1.42}
+          thickness={4.5}
+          roughness={0.05}
+          metalness={0.12}
+          transparent
+          opacity={0.92}
+        />
+      </mesh>
+
+      {/* Internal Emissive Data Core */}
+      <mesh rotation={[Math.PI / 2, Math.PI / 4, 0]} position={[0, -0.2, 0]} scale={[1.3, 3.2, 0.2]}>
+        <coneGeometry args={[2.5, 6, 4]} />
+        <meshPhysicalMaterial
+          ref={registerSceneMaterial}
+          color="#ff0a33"
+          emissive="#e11d48"
+          emissiveIntensity={2.2}
+          transmission={0.2}
+          roughness={0.4}
+          transparent
+          opacity={0.95}
+        />
+      </mesh>
+
+      {/* Precision Engineering Holographic Grid */}
+      <mesh rotation={[Math.PI / 2, Math.PI / 4, 0]} scale={[1.81, 4.01, 0.46]}>
+        <coneGeometry args={[2.5, 6, 6, 4]} />
+        <meshBasicMaterial
+          ref={registerSceneMaterial}
+          color="#38bdf8"
+          wireframe
+          transparent
+          opacity={0.15}
+          blending={THREE.AdditiveBlending}
+        />
+      </mesh>
+
+      {/* Massive Engine Plume & Data Wake */}
+      <group position={[0, 0, -4.5]}>
+        <Sparkles 
+          count={simplified ? 0 : 400} 
+          scale={[12, 1, 14]} 
+          size={5} 
+          speed={0.4} 
+          opacity={0.2} 
+          color="#34d399" 
+        />
+        <Sparkles 
+          count={simplified ? 0 : 250} 
+          scale={[8, 1, 10]} 
+          size={8} 
+          speed={0.6} 
+          opacity={0.4} 
+          color="#e11d48" 
+        />
+      </group>
+      
+      {/* Primary Engine Cluster */}
+      <mesh position={[0, 0, -3.2]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.8, 1.4, 1.2, 4]} />
+        <meshPhysicalMaterial
+          ref={registerSceneMaterial}
+          color="#06080b"
+          metalness={0.9}
+          roughness={0.4}
+          transparent
+          opacity={0.98}
+        />
+      </mesh>
+
+      <group position={[-0.6, 0, -3.8]}>
+        <ThrusterFlare position={[0,0,0]} tone="emerald" scale={3.4} registerMaterial={registerSceneMaterial} />
+        <EngineWake tone="emerald" registerMaterial={registerSceneMaterial} />
+      </group>
+      <group position={[0.6, 0, -3.8]}>
+        <ThrusterFlare position={[0,0,0]} tone="emerald" scale={3.4} registerMaterial={registerSceneMaterial} />
+        <EngineWake tone="emerald" registerMaterial={registerSceneMaterial} />
+      </group>
+      <group position={[0, 0, -4.2]}>
+        <ThrusterFlare position={[0,0,0]} tone="blue" scale={2.8} registerMaterial={registerSceneMaterial} />
+        <EngineWake tone="blue" registerMaterial={registerSceneMaterial} />
+      </group>
+
+      {/* Forward-Facing Holographic Branding */}
+      <BrandPlate
+        label="RUTGERS UNIVERSITY"
+        sublabel="Data Core Flagship"
+        position={[0, 1.25, 1.5]}
+        rotation={[-0.15, 0, 0]} 
+        tone="scarlet"
+        size={[3.6, 0.85]}
+        opacity={1.0}
+        registerMaterial={registerSceneMaterial}
+      />
+      
+      {!simplified && (
+        <BrandPlate
+          label="/// ORBITAL ENTRY"
+          position={[0, -0.8, 3.2]}
+          rotation={[0.2, 0, 0]}
+          tone="emerald"
+          size={[1.4, 0.25]}
+          opacity={0.9}
+          registerMaterial={registerSceneMaterial}
+        />
+      )}
+    </group>
+  );
+}
+
+function RutgersEducationScene({
+  ranges,
+  profile,
+}: {
+  ranges: HomeSceneRanges;
+  profile: ReturnType<typeof useSceneProfile>;
+}) {
+  const scroll = useScroll();
+  const rootRef = useRef<THREE.Group>(null!);
+  const shipRef = useRef<THREE.Group>(null!);
+  const packetRefs = useRef<Array<THREE.Mesh | null>>([]);
+  const tempPointRef = useRef(new THREE.Vector3());
+  const tempTangentRef = useRef(new THREE.Vector3());
+  const tempLookRef = useRef(new THREE.Vector3());
+
+  const visibleNodes = useMemo(
+    () => homeSceneData.education.nodes.slice(0, profile.educationNodes),
+    [profile.educationNodes]
+  );
+  
+  const anchorZ = useMemo(
+    () => getRangeDepth(ranges.education, -6),
+    [ranges.education.end, ranges.education.start]
+  );
+  const [focusX, focusY, focusZ] = homeSceneData.education.focalOffset;
+  const [shipOffsetX, shipOffsetY, shipOffsetZ] = homeSceneData.education.shipOffset;
+  const [shipRotX, shipRotY, shipRotZ] = homeSceneData.education.shipRotation;
+
+  const ribbons = useMemo(
+    () =>
+      homeSceneData.education.ribbons.slice(0, profile.educationRibbons).map((lane) => ({
+        ...lane,
+        curve: new THREE.CatmullRomCurve3(lane.points.map(([x, y, z]) => new THREE.Vector3(x, y, z))),
+      })),
+    [profile.educationRibbons]
+  );
+
+  const ribbonPackets = useMemo(
+    () =>
+      ribbons.flatMap((ribbon) => {
+        if (profile.educationPackets === 0) return [];
+        return ribbon.packetOffsets.slice(0, profile.educationPackets).map((offset) => ({
+          curve: ribbon.curve,
+          tone: ribbon.tone,
+          offset,
+          speed: ribbon.packetSpeed,
+          emphasis: ribbon.emphasis ?? "primary",
+        }));
+      }),
+    [profile.educationPackets, ribbons]
+  );
+
+  const { materialsRef: sceneMaterials, registerMaterial: registerSceneMaterial } = useMaterialRegistry();
+
+  useFrame((state) => {
+    const elapsed = state.clock.getElapsedTime();
+    const rangeSpan = Math.max(0.0001, ranges.education.end - ranges.education.start);
+    const progress = clamp01((scroll.offset - ranges.education.start) / rangeSpan);
+    const presence = getRangePresence(scroll.offset, ranges.education, 0.055);
+    const calm = THREE.MathUtils.smoothstep(
+      scroll.offset,
+      Math.max(0, ranges.contact.start - 0.08),
+      Math.min(1, ranges.contact.start + 0.02)
+    );
+    const alpha = presence * (1 - calm * 0.72);
+    const flightProgress = THREE.MathUtils.smoothstep(progress, 0.02, 0.9);
+    const shipExit = THREE.MathUtils.smoothstep(progress, 0.82, 1);
+
+    const yEntrance = -(1 - presence) * 7;
+    const zEntrance = -(1 - presence) * 5;
+
+    rootRef.current.visible = alpha > 0.01;
+    rootRef.current.position.set(focusX, focusY + yEntrance, anchorZ + focusZ + zEntrance);
+    rootRef.current.rotation.x = THREE.MathUtils.lerp(rootRef.current.rotation.x, -0.05, 0.04);
+    rootRef.current.rotation.y = THREE.MathUtils.lerp(
+      rootRef.current.rotation.y,
+      Math.sin(elapsed * 0.05) * 0.03,
+      0.04
+    );
+    rootRef.current.scale.setScalar(0.96 + presence * 0.04);
+
+    const shipScaleBase = profile.simplified ? 0.6 : profile.tablet ? 0.75 : 0.95;
+    
+    // Centered Inter-Tile Flyover: perfectly bisects the cards vertically
+    shipRef.current.position.set(
+      shipOffsetX + THREE.MathUtils.lerp(0.0, 0.0, flightProgress),
+      shipOffsetY + THREE.MathUtils.lerp(-1.0, 0.0, flightProgress),
+      shipOffsetZ + THREE.MathUtils.lerp(-40.0, 15.0, flightProgress)
+    );
+    // Dynamic pitch so the craft remains sleek and horizontal as it shoots through the gap
+    shipRef.current.rotation.x = THREE.MathUtils.lerp(
+      shipRef.current.rotation.x,
+      shipRotX + THREE.MathUtils.lerp(0.15, 0.0, flightProgress),
+      0.08
+    );
+    // Steady symmetrical flyover
+    shipRef.current.rotation.y = THREE.MathUtils.lerp(
+      shipRef.current.rotation.y,
+      shipRotY + THREE.MathUtils.lerp(-0.02, 0.02, flightProgress),
+      0.08
+    );
+    // Slight roll stabilization
+    shipRef.current.rotation.z = THREE.MathUtils.lerp(
+      shipRef.current.rotation.z,
+      shipRotZ + THREE.MathUtils.lerp(0.05, -0.05, flightProgress) + Math.sin(elapsed * 0.4) * 0.015,
+      0.08
+    );
+    
+    // Controlled Expansion: Fits massive power into the precise gap between the layout cards
+    shipRef.current.scale.setScalar(shipScaleBase * (1.0 + flightProgress * 0.6 - shipExit * 0.2));
+
+    setRegisteredOpacity(sceneMaterials.current, alpha);
+
+    packetRefs.current.forEach((packetMesh, index) => {
+      if (!packetMesh) return;
+      const packet = ribbonPackets[index];
+      const t = (packet.offset + elapsed * packet.speed) % 1;
+      packet.curve.getPoint(t, tempPointRef.current);
+      packet.curve.getTangent(t, tempTangentRef.current);
+      packetMesh.position.copy(tempPointRef.current);
+      tempLookRef.current.copy(tempPointRef.current).add(tempTangentRef.current);
+      packetMesh.lookAt(tempLookRef.current);
+
+      const material = packetMesh.material as THREE.MeshBasicMaterial;
+      material.opacity = alpha * (packet.emphasis === "support" ? 0.35 : 0.65);
+    });
+  });
+
+  return (
+    <group ref={rootRef}>
+      {homeSceneData.education.halos.map((halo) => (
+        <SignalHalo
+          key={`${halo.position.join(":")}-${halo.radius}`}
+          halo={halo}
+          registerMaterial={registerSceneMaterial}
+        />
+      ))}
+
+      {homeSceneData.education.latticePlanes.map((plane) => (
+        <WireLatticePlane
+          key={`${plane.position.join(":")}-${plane.tone}`}
+          plane={plane}
+          registerMaterial={registerSceneMaterial}
+        />
+      ))}
+
+      {ribbons.map((ribbon, index) => (
+        <mesh key={`education-ribbon-${index}`}>
+          <tubeGeometry args={[ribbon.curve, 48, ribbon.radius, 10, false]} />
+          <meshPhysicalMaterial
+            ref={registerSceneMaterial}
+            color={TONE_COLORS[ribbon.tone]}
+            transmission={0.65}
+            opacity={ribbon.emphasis === "support" ? 0.15 : 0.25}
+            transparent
+            ior={1.25}
+            thickness={0.25}
+            roughness={0.1}
+            metalness={0.1}
+          />
+        </mesh>
+      ))}
+
+      {visibleNodes.map((position, index) => (
+        <GlassNode
+          key={`education-node-${index}`}
+          position={position}
+          size={0.18 + index * 0.02}
+          tone={index % 2 === 0 ? "scarlet" : "emerald"}
+          registerMaterial={registerSceneMaterial}
+        />
+      ))}
+
+      {ribbonPackets.map((packet, index) => (
+        <mesh
+          key={`education-packet-${index}`}
+          ref={(node) => {
+            packetRefs.current[index] = node;
+          }}
+        >
+          <capsuleGeometry args={[0.015, 0.2, 4, 8]} />
+          <meshBasicMaterial
+            color={TONE_COLORS[packet.tone]}
+            transparent
+            opacity={0.5}
+            depthWrite={false}
+            toneMapped={false}
+          />
+        </mesh>
+      ))}
+
+      <group ref={shipRef}>
+        <EducationSpacecraft 
+          flightProgress={(clamp01((scroll.offset - ranges.education.start) / Math.max(0.0001, ranges.education.end - ranges.education.start)))} 
+          simplified={profile.simplified} 
+          registerSceneMaterial={registerSceneMaterial} 
+        />
+      </group>
+    </group>
+  );
+}
+
 function ContactTaper({
   ranges,
   profile,
@@ -946,6 +1511,7 @@ export function HomeLowerScene({ sectionRanges }: { sectionRanges: HomeSceneRang
     <>
       <ProjectsDataCosmos ranges={sectionRanges} profile={profile} />
       <ExperienceSystemsField ranges={sectionRanges} profile={profile} />
+      <RutgersEducationScene ranges={sectionRanges} profile={profile} />
       <ContactTaper ranges={sectionRanges} profile={profile} />
     </>
   );
