@@ -12,9 +12,9 @@ Use this when editing a `/:profileSlug/project/:id` experience, including the he
 
 ## Constraints And Pitfalls
 
-- Scene choice and accent color are tied to `project.type`.
+- The active case-study theme and hero scene are tied to `profileSlug`, while `project.type` still matters for shared project tone elsewhere in the app.
 - The next-project CTA is tied to the active profile's project array order, not an explicit relationship field.
-- The source/demo controls are styled buttons, not real links today.
+- The detail page no longer uses fake source/demo buttons; keep CTAs truthful unless you add real per-project URLs in data.
 - The route redirects to the active profile homepage when `id` lookup fails.
 
 ## Safe Workflow
@@ -32,9 +32,10 @@ Use this when editing a `/:profileSlug/project/:id` experience, including the he
 - Open the edited project detail page directly by `/:profileSlug/project/:id`
 - Use the back link
 - Use the next-project CTA
-- Confirm the selected scene and accent color still match the project type
+- Confirm the selected profile theme and scene match the active profile route and the page remains readable at laptop widths
 
 ## Repo-Specific Gotchas
 
 - `flow` rendering depends on splitting the string with `" -> "`.
+- The support rail is intentionally non-sticky until very wide screens; if it becomes sticky too early, overlap risk comes back.
 - Missing IDs, duplicate IDs within a profile, or incorrect profile-scoped ordering break next-project navigation assumptions.

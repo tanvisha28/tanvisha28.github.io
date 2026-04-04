@@ -16,9 +16,9 @@ Scope: everything in `src/pages`.
 
 ## Project Detail Specifics
 
-- `ProjectDetail.tsx` derives the scene, accent colors, and next-project CTA from the active profile's `projects` array in `portfolioProfiles`.
+- `ProjectDetail.tsx` derives the active project from the current profile's `projects` array in `portfolioProfiles`, while the detail-page hero theme and 3D scene are selected from the active `profileSlug`.
 - If you change `Project.type` semantics or ordering, review this page together with `HomeSections.tsx`, `ProjectScenes.tsx`, and `portfolioData.ts`.
-- The current "View Source Code" and "Live Demo" actions are visual buttons only. They are not yet data-backed links.
+- The detail page currently uses truthful cross-site CTAs (`Resume`, `Get In Touch`, next-project navigation) instead of placeholder source/demo buttons.
 
 ## Required Checks After Page Edits
 

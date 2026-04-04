@@ -133,9 +133,9 @@ Check:
 
 Check:
 
-1. `project.type` in `portfolioData.ts`
-2. Scene mapping in `ProjectDetail.tsx`
-3. Tone mapping in `HomeSections.tsx`
+1. The active `profileSlug` resolution in `ProjectDetail.tsx`
+2. Theme / scene mapping in `ProjectDetail.tsx`
+3. `project.type` and `icon` in `portfolioData.ts` if the homepage card tone is wrong
 4. Scene implementation in `ProjectScenes.tsx`
 5. The project lookup is happening inside the expected profile's `projects` array rather than another profile.
 
@@ -145,6 +145,7 @@ Likely causes:
 
 - missing required fields in a profile entry inside `portfolioData`
 - changing `flow` to a non-string structure
+- missing `stakes`, `ownership`, `decisions`, or `impactMetrics` on a project after expanding the case-study layout
 - introducing a new `type` value without updating unions
 - introducing a new profile slug or profile map entry without updating route handling
 

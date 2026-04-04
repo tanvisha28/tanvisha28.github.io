@@ -39,6 +39,19 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 
 ### 2026-04-04
 
+- Rebuilt the profile-scoped case-study route as a richer, role-family detail experience:
+  - `src/pages/ProjectDetail.tsx` now uses a premium multi-section layout with a hero metrics rail, support rail, responsive workflow cards, implementation/decision modules, and truthful cross-site CTAs instead of placeholder source/demo buttons
+  - the old single-row system-flow strip was replaced with responsive cards so laptop-width layouts no longer collide with the support rail
+- Expanded the project data contract in `src/data/portfolioData.ts` for every profile's case studies:
+  - each project now includes `stakes`, `ownership`, `decisions`, and `impactMetrics` to support deeper, structured storytelling on the detail route
+  - `flow` remains string-based with `" -> "` separators for route-level workflow rendering
+- Replaced the old AI / DE / DS detail-scene mapping with role-family case-study hero scenes in `src/components/3d/ProjectScenes.tsx`:
+  - Data Engineer, Software Engineer, Data Scientist, and Data Analyst routes now each use their own visual language
+  - detail-page scene choice is keyed from the active `profileSlug`, while `project.type` remains part of the shared content model and homepage project tone
+- Updated contributor docs to reflect the new case-study contract, profile-family hero-scene mapping, and removal of placeholder project-link buttons.
+
+### 2026-04-04
+
 - Converted the portfolio from a single profile into four role-specific variants served from profile-scoped routes:
   - `/` redirects to `/dataengineer`
   - `/:profileSlug` renders the active profile homepage

@@ -53,7 +53,7 @@
 - The homepage top-level sections are tracked in `src/pages/Home.tsx` via `data-home-scroll-section`. Keep `#contact` and the footer as the final two marked sections.
 - `ScrollControls.pages` is derived from measured HTML height in [`src/pages/Home.tsx`](src/pages/Home.tsx). Large spacing or content changes can break the scroll depth if that measurement falls out of sync.
 - `StoryScene` uses hard-coded Z positions for narrative beats. Large section order or height changes can desync the 3D motion from the HTML content.
-- `ProjectDetail` picks both accent styling and the 3D project scene from `project.type`, while route lookups are scoped to the active `profileSlug`.
+- `ProjectDetail` is profile-scoped. Route lookup stays keyed by `profileSlug`, while the detail-page visual theme and 3D hero scene now follow the active profile family rather than only `project.type`.
 
 ## Editing Constraints
 

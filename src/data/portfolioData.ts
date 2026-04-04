@@ -7,6 +7,17 @@ export type ProfileSlug = "dataengineer" | "softwareengineer" | "datascientist" 
 export type ProjectType = "AI" | "DE" | "DS";
 export type ProjectIcon = "trend" | "pipeline" | "monitoring" | "application" | "translation" | "risk";
 
+export interface ProjectDecision {
+  title: string;
+  detail: string;
+}
+
+export interface ProjectImpactMetric {
+  label: string;
+  value: string;
+  detail: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -19,11 +30,15 @@ export interface Project {
   techStack: string[];
   problem: string;
   context: string;
+  stakes: string;
+  ownership: string[];
   goals: string[];
   architecture: string;
   implementation: string[];
+  decisions: ProjectDecision[];
   flow: string;
   challenges: string[];
+  impactMetrics: ProjectImpactMetric[];
   outcomes: string[];
   lessons: string[];
 }
@@ -202,6 +217,12 @@ const dataEngineerProfile: PortfolioData = {
       techStack: ["Python", "SQL", "Reddit API", "NYT API", "Plotly", "Walk-Forward Testing"],
       problem: "Forecasting inputs lived across disconnected market, indicator, and sentiment sources, making feature preparation slow, inconsistent, and hard to validate before analysis.",
       context: "Adapted from the Tesla forecasting project on the data engineering resume to emphasize ingestion design, transformation reliability, and monitored dataset delivery rather than model tuning alone.",
+      stakes: "If the dataset assembly stayed manual, every forecasting run would inherit inconsistent source timing, weak lineage, and unclear validation, which would make any downstream signal analysis harder to trust.",
+      ownership: [
+        "Defined the ingestion boundaries for market history, technical indicators, and external sentiment feeds.",
+        "Built the validation-first transformation path that turned raw source pulls into a forecast-ready feature layer.",
+        "Packaged the outputs into dashboard-friendly views so the same pipeline served both analysis and stakeholder review.",
+      ],
       goals: [
         "Automate ingestion across price history, technical indicators, and external sentiment sources.",
         "Add validation and monitoring so feature datasets could be trusted before forecasting work began.",
@@ -213,10 +234,41 @@ const dataEngineerProfile: PortfolioData = {
         "Added walk-forward validation checks and pipeline monitoring so data quality issues surfaced before forecast experiments consumed the dataset.",
         "Published the resulting signals into Plotly dashboards that exposed both market trends and pipeline quality indicators for broader review.",
       ],
+      decisions: [
+        {
+          title: "Validation before modeling",
+          detail: "Placed validation checkpoints inside the dataset pipeline rather than after model training so feature issues were caught before they polluted downstream experiments.",
+        },
+        {
+          title: "Source cadence alignment",
+          detail: "Aligned sentiment pulls to market intervals instead of treating external feeds as free-form text inputs, which kept the engineered features analytically comparable over time.",
+        },
+        {
+          title: "Dual-use delivery",
+          detail: "Published the output in a form that worked for both technical forecasting experiments and stakeholder-facing dashboards so the pipeline did not fork into separate reporting logic.",
+        },
+      ],
       flow: "Market Data + Sentiment APIs -> Ingestion & Validation -> Feature Layer -> Forecast-Ready Dataset -> Plotly Dashboards",
       challenges: [
         "Aligning sentiment collection windows with market intervals so engineered features remained analytically meaningful.",
         "Keeping the pipeline reproducible while handling different source refresh cadences and validation steps.",
+      ],
+      impactMetrics: [
+        {
+          label: "Source Footprint",
+          value: "3 feeds",
+          detail: "Unified market, Reddit, and New York Times signals inside one monitored ingestion path.",
+        },
+        {
+          label: "Delivery Focus",
+          value: "Validation-first",
+          detail: "Checks were embedded in the pipeline before forecasting workflows consumed the dataset.",
+        },
+        {
+          label: "Output Shape",
+          value: "Dashboard-ready",
+          detail: "The same pipeline produced analyst-friendly features and review-friendly signal views.",
+        },
       ],
       outcomes: [
         "Replaced ad hoc dataset assembly with a reusable, validated forecasting data pipeline.",
@@ -240,6 +292,12 @@ const dataEngineerProfile: PortfolioData = {
       techStack: ["Python", "SQL", "AWS", "Databricks", "Airflow", "Snowflake"],
       problem: "Operational telemetry, ERP records, and finance data lived in separate systems, which slowed reporting and reduced trust in shared performance metrics.",
       context: "Built from the Sonaflex data engineer experience to center the platform work: ETL and ELT on AWS, layered warehousing, and production-grade pipeline reliability.",
+      stakes: "Without a shared platform layer, every plant and business review depended on delayed extracts, inconsistent definitions, and fragile reporting logic that could not scale across operations and finance.",
+      ownership: [
+        "Built the ingestion and transformation path that connected telemetry, ERP, and finance datasets into one platform.",
+        "Owned the medallion-style warehouse progression from raw landing zones to curated consumption models.",
+        "Added the monitoring, testing, and quality controls that made the platform dependable for recurring operational use.",
+      ],
       goals: [
         "Unify batch and near-real-time ingestion across machine, ERP, and business systems.",
         "Create Bronze, Silver, and Gold models that standardized downstream reporting inputs.",
@@ -251,10 +309,41 @@ const dataEngineerProfile: PortfolioData = {
         "Designed Bronze, Silver, and Gold layers plus curated warehouse models in Snowflake and Redshift to standardize schemas and analytics readiness.",
         "Implemented data quality checks, automated testing, and monitoring to reduce failures and simplify troubleshooting in production.",
       ],
+      decisions: [
+        {
+          title: "Layered warehouse contract",
+          detail: "Used Bronze, Silver, and Gold boundaries so raw ingestion, standardized transformation, and business-facing consumption each had clear ownership and quality expectations.",
+        },
+        {
+          title: "Mixed-latency design",
+          detail: "Balanced batch and near-real-time source handling inside one platform instead of forcing all systems into a single refresh cadence that would underserve operations.",
+        },
+        {
+          title: "Observability as adoption work",
+          detail: "Treated testing and monitoring as product features for the platform because downstream teams would not rely on the data without visible quality signals.",
+        },
+      ],
       flow: "Telemetry + ERP + Finance Sources -> AWS Ingestion -> Databricks Transformations -> Bronze/Silver/Gold Models -> Snowflake/Redshift Consumption",
       challenges: [
         "Balancing batch and near-real-time ingestion needs across operational and business systems.",
         "Maintaining trustworthy schemas and quality rules across heterogeneous plant and finance inputs.",
+      ],
+      impactMetrics: [
+        {
+          label: "Source Domains",
+          value: "3 streams",
+          detail: "Unified machine telemetry, ERP records, and finance data in one governed platform flow.",
+        },
+        {
+          label: "Warehouse Shape",
+          value: "Bronze to Gold",
+          detail: "Standardized the progression from raw ingestion to trusted reporting tables.",
+        },
+        {
+          label: "Platform Trust",
+          value: "Production-grade",
+          detail: "Monitoring, automated tests, and explicit quality checks increased downstream confidence.",
+        },
       ],
       outcomes: [
         "Improved data freshness for equipment monitoring, downtime tracking, and production reporting.",
@@ -278,6 +367,12 @@ const dataEngineerProfile: PortfolioData = {
       techStack: ["PySpark", "SQL", "MLflow", "Evidently AI", "Python", "Window Functions"],
       problem: "Route-level delay behavior changed across seasons, leaving analytical workflows stale and making it difficult to know when data and model assumptions no longer held.",
       context: "Framed from the airline drift monitoring project to emphasize the distributed data workflow, monitored feature processing, and retraining signals built into the pipeline.",
+      stakes: "If seasonal changes went undetected, route analytics and downstream forecasting would keep operating on stale assumptions, creating false confidence in both reporting and model performance.",
+      ownership: [
+        "Built the distributed feature-processing workflow over the historical flight record set.",
+        "Connected monitoring signals to the analytical pipeline so drift became visible inside the operating workflow instead of after the fact.",
+        "Framed the outputs around retraining readiness and reporting reliability, not only around raw model metrics.",
+      ],
       goals: [
         "Process 2.15M+ flight records in a distributed workflow suited to route and season analysis.",
         "Automate drift checks so data and model degradation became visible earlier.",
@@ -289,10 +384,41 @@ const dataEngineerProfile: PortfolioData = {
         "Integrated MLflow and Evidently AI to surface performance degradation and sentiment drift across seasonal data changes.",
         "Structured the workflow to reduce manual reporting effort and generate clearer retraining signals for downstream forecasting.",
       ],
+      decisions: [
+        {
+          title: "Route-aware monitoring",
+          detail: "Tracked behavior at route and seasonal levels rather than relying on one global aggregate, which made drift interpretation more defensible.",
+        },
+        {
+          title: "Monitoring inside the data path",
+          detail: "Attached drift checks to the feature-processing workflow so they became part of routine delivery instead of an after-the-fact report.",
+        },
+        {
+          title: "Retraining as an explicit outcome",
+          detail: "Designed the monitoring output to answer when intervention was needed, not just whether variance existed.",
+        },
+      ],
       flow: "Flight Records -> PySpark Processing -> Route Features -> Drift Monitoring -> Performance Review -> Retraining Signals",
       challenges: [
         "Separating true drift from normal seasonal variance across airline routes and operating periods.",
         "Keeping the monitoring workflow useful for both analytics and model lifecycle decisions.",
+      ],
+      impactMetrics: [
+        {
+          label: "Record Volume",
+          value: "2.15M+",
+          detail: "Processed enough historical flight data to reason about route and seasonal behavior at scale.",
+        },
+        {
+          label: "Reporting Lift",
+          value: "-40%",
+          detail: "Reduced manual reporting effort by embedding monitoring and review into the pipeline.",
+        },
+        {
+          label: "Retraining Lag",
+          value: "-30%",
+          detail: "Earlier drift visibility shortened the time to act on changing model behavior.",
+        },
       ],
       outcomes: [
         "Processed 2.15M+ flight records in a pipeline that reduced manual reporting effort by 40%.",
@@ -445,6 +571,12 @@ const softwareEngineerProfile: PortfolioData = {
       techStack: ["React", "Flask", "PostgreSQL", "TimescaleDB", "REST APIs", "Python"],
       problem: "Hospitals and blood banks needed a single operational system for donor records, inventory visibility, and emergency request handling instead of fragmented manual tracking.",
       context: "Built directly from the software engineering resume project to showcase application architecture, API design, relational modeling, and delivery of a user-facing operations workflow.",
+      stakes: "When inventory state, donor records, and emergency requests live in separate workflows, response time slows down and operators lose the shared context needed to act confidently during urgent fulfillment.",
+      ownership: [
+        "Built the full-stack workflow spanning React dashboards, Flask APIs, and relational data design.",
+        "Modeled the operational entities and request lifecycle so the application tracked state transitions clearly.",
+        "Connected time-aware persistence and request handling into one system that prioritized traceability during urgent use.",
+      ],
       goals: [
         "Create a full-stack system that tracked inventory, requests, donors, and transaction history in one application.",
         "Model the core entities and workflows clearly enough to support traceability and fast emergency handling.",
@@ -456,10 +588,41 @@ const softwareEngineerProfile: PortfolioData = {
         "Modeled donors, organizations, blood units, inventory events, and transactions in PostgreSQL with TimescaleDB to support traceability and time-based querying.",
         "Organized the workflow so frontend views, backend logic, and persistent data all aligned around operational request handling instead of isolated screens.",
       ],
+      decisions: [
+        {
+          title: "Domain-first data model",
+          detail: "Defined donors, requests, inventory units, and transactions as explicit entities before refining the UI so state changes stayed traceable throughout the application.",
+        },
+        {
+          title: "REST workflow boundaries",
+          detail: "Separated validation, request handling, and persistence concerns behind API endpoints that matched the operational workflow instead of mirroring database tables one-to-one.",
+        },
+        {
+          title: "Time-based history retention",
+          detail: "Used PostgreSQL with TimescaleDB support so inventory and request histories stayed queryable as real operational timelines rather than flattened snapshots.",
+        },
+      ],
       flow: "React Dashboards -> Flask APIs -> Validation & Workflow Logic -> PostgreSQL/TimescaleDB -> Inventory & Request Tracking",
       challenges: [
         "Keeping inventory state, compatibility rules, and request fulfillment logic synchronized across multiple user actions.",
         "Designing schemas and APIs that stayed understandable while still supporting traceability and time-based history.",
+      ],
+      impactMetrics: [
+        {
+          label: "Response Delays",
+          value: "-50%+",
+          detail: "Faster visibility into requests and inventory status cut the operational lag during urgent handling.",
+        },
+        {
+          label: "Core Domains",
+          value: "4 workflows",
+          detail: "Tracked donors, inventory, requests, and transactions inside one aligned application model.",
+        },
+        {
+          label: "System Shape",
+          value: "Full-stack",
+          detail: "Frontend dashboards, backend APIs, and relational history were designed as one product flow.",
+        },
       ],
       outcomes: [
         "Reduced emergency blood-response delays by more than 50% through faster request tracking and inventory visibility.",
@@ -483,6 +646,12 @@ const softwareEngineerProfile: PortfolioData = {
       techStack: ["Python", "Whisper ASR", "Machine Translation", "TTS", "BLEU Evaluation", "Connector Modules"],
       problem: "An end-to-end speech translation stack can become brittle quickly when ASR, translation, and synthesis components are coupled too tightly and hard to evaluate independently.",
       context: "Adapted from the software engineering resume to emphasize modular system boundaries, connector design, evaluation workflows, and the engineering work that made the pipeline maintainable.",
+      stakes: "If the speech stack remained tightly coupled, every model change would ripple across the full pipeline, raising retraining cost and making debugging far slower than the product could tolerate.",
+      ownership: [
+        "Defined the modular boundaries between ASR, connector logic, translation, and TTS stages.",
+        "Built the intermediate connector layer that let the pipeline evolve without retraining every downstream component.",
+        "Created the evaluation harness that kept multilingual quality and system behavior measurable as the architecture changed.",
+      ],
       goals: [
         "Standardize the interfaces between ASR, translation, and TTS components.",
         "Reduce training and debugging cost by isolating the cross-model connector behavior.",
@@ -494,10 +663,41 @@ const softwareEngineerProfile: PortfolioData = {
         "Implemented the connector module that mapped ASR embeddings into the translation model representation space while keeping the rest of the stack stable.",
         "Defined multilingual evaluation and BLEU-based validation workflows so output quality could be measured consistently across datasets.",
       ],
+      decisions: [
+        {
+          title: "Connector over end-to-end retraining",
+          detail: "Introduced a dedicated representation-mapping stage so interface adaptation happened in one controlled layer instead of requiring full-stack retraining for every change.",
+        },
+        {
+          title: "Pipeline modularity",
+          detail: "Kept ASR, translation, and TTS as independently testable stages so failures and quality regressions were easier to localize.",
+        },
+        {
+          title: "Evaluation as a system feature",
+          detail: "Built BLEU-driven validation into the pipeline contract because extensibility only mattered if multilingual quality stayed visible and comparable.",
+        },
+      ],
       flow: "Speech Input -> Whisper ASR -> Connector Module -> Translation Model -> TTS Output -> BLEU Validation",
       challenges: [
         "Designing interfaces that preserved model quality without hardwiring every stage together.",
         "Keeping evaluation reproducible across multilingual datasets and varying utterance lengths.",
+      ],
+      impactMetrics: [
+        {
+          label: "Training Cost",
+          value: "-90%",
+          detail: "Connector-based adaptation cut retraining overhead dramatically while preserving output quality.",
+        },
+        {
+          label: "System Boundary",
+          value: "4 stages",
+          detail: "ASR, connector, translation, and TTS remained independently testable and debuggable.",
+        },
+        {
+          label: "Quality Signal",
+          value: "BLEU-tracked",
+          detail: "Multilingual evaluation stayed visible as the system architecture evolved.",
+        },
       ],
       outcomes: [
         "Reduced model training cost by 90% through the connector design while sustaining strong BLEU accuracy.",
@@ -521,6 +721,12 @@ const softwareEngineerProfile: PortfolioData = {
       techStack: ["Python", "SQL", "AWS", "Snowflake", "dbt", "Azure DevOps"],
       problem: "Manufacturing teams needed operational data to move from source systems into accessible platform services and validated datasets without month-end reporting delays or fragile deployment processes.",
       context: "Framed from the software engineering resume version of the Sonaflex work to emphasize backend services, CI/CD, and the execution layer that made the data platform usable across business units.",
+      stakes: "If backend ingestion and deployment remained brittle, the reporting layer would keep inheriting stale data, long release cycles, and service changes that were too risky to ship quickly.",
+      ownership: [
+        "Built the ingestion and backend service layer that moved telemetry into reporting-ready platform paths.",
+        "Connected ETL and ELT logic with release automation so data delivery could improve without manual deployment friction.",
+        "Strengthened service reliability through validation checks and repeatable CI/CD across environments.",
+      ],
       goals: [
         "Build backend services that moved telemetry into accessible platform workflows.",
         "Create ETL and ELT paths that produced validated datasets for downstream reporting.",
@@ -532,10 +738,41 @@ const softwareEngineerProfile: PortfolioData = {
         "Engineered ETL and ELT paths with Python, SQL, dbt, S3, Glue, and Snowflake to transform raw operational data into validated outputs.",
         "Standardized CI/CD workflows and strengthened data quality checks across staging and production to speed release cycles and reduce latency.",
       ],
+      decisions: [
+        {
+          title: "Backend services over manual extracts",
+          detail: "Moved platform access into code-driven ingestion services so the reporting path became maintainable and repeatable instead of analyst-dependent.",
+        },
+        {
+          title: "Quality checks inside delivery",
+          detail: "Attached validation rules to the service and deployment workflow so release speed did not come at the cost of downstream trust.",
+        },
+        {
+          title: "CI/CD as platform leverage",
+          detail: "Standardized Azure DevOps release handling because faster, safer deployments directly affected the usefulness of the data product.",
+        },
+      ],
       flow: "Manufacturing Sources -> Python Services -> AWS ETL/ELT -> Validation Checks -> Snowflake Datasets -> Reporting Consumers",
       challenges: [
         "Balancing operational freshness with maintainable backend logic and deployment controls.",
         "Keeping platform services reliable across multiple business units and evolving reporting demands.",
+      ],
+      impactMetrics: [
+        {
+          label: "Data Access",
+          value: "+40%",
+          detail: "More than five business units gained easier access to validated operational data.",
+        },
+        {
+          label: "Deploy Speed",
+          value: "-35%",
+          detail: "Release automation shortened deployment time across platform changes.",
+        },
+        {
+          label: "Reporting Lag",
+          value: "-40%",
+          detail: "Faster backend delivery reduced month-end reporting latency materially.",
+        },
       ],
       outcomes: [
         "Improved data accessibility by 40% across more than five business units.",
@@ -686,6 +923,12 @@ const dataScientistProfile: PortfolioData = {
       techStack: ["PyTorch", "Whisper ASR", "Machine Translation", "TTS", "BLEU", "Connector Modules"],
       problem: "End-to-end multilingual translation systems are expensive to retrain and difficult to adapt when ASR and translation representations do not align cleanly.",
       context: "Built directly from the data scientist resume to emphasize multimodal modeling, cross-modal alignment, experimentation, and evaluation against large end-to-end baselines.",
+      stakes: "Without a more efficient alignment strategy, every multilingual improvement would demand expensive retraining across the entire stack, slowing experimentation and making deployment tradeoffs harder to justify.",
+      ownership: [
+        "Designed the connector-based modeling approach that linked ASR outputs to the downstream translation space.",
+        "Ran the experimentation and benchmarking workflow across multilingual corpora to test whether the connector preserved quality.",
+        "Defined the evaluation framing so the architectural tradeoff between cost and accuracy stayed measurable.",
+      ],
       goals: [
         "Bridge ASR outputs into the translation model space without retraining the full stack.",
         "Validate multilingual quality with consistent, benchmarked evaluation workflows.",
@@ -697,10 +940,41 @@ const dataScientistProfile: PortfolioData = {
         "Fine-tuned and benchmarked the pipeline on multilingual speech corpora to validate accuracy and real-time inference behavior.",
         "Defined BLEU-driven evaluation workflows to compare the connector approach against larger end-to-end transformer baselines.",
       ],
+      decisions: [
+        {
+          title: "Connector-based alignment",
+          detail: "Focused adaptation effort on one intermediate layer so the model stack stayed flexible without incurring the cost of full-model retraining.",
+        },
+        {
+          title: "Frozen downstream components",
+          detail: "Kept the translation and speech synthesis stages stable to isolate whether the connector itself could bridge the representation gap successfully.",
+        },
+        {
+          title: "Benchmark-led validation",
+          detail: "Compared against larger end-to-end baselines so the efficiency win could be judged against a credible quality reference rather than in isolation.",
+        },
+      ],
       flow: "Speech Input -> Whisper ASR -> Cross-Modal Connector -> Translation Model -> TTS Output -> Multilingual Evaluation",
       challenges: [
         "Maintaining translation quality while reducing the amount of retraining required.",
         "Measuring system behavior consistently across varied languages, utterance lengths, and benchmark datasets.",
+      ],
+      impactMetrics: [
+        {
+          label: "Training Cost",
+          value: "-90%",
+          detail: "Connector-based adaptation cut the retraining burden dramatically relative to larger end-to-end setups.",
+        },
+        {
+          label: "Modeling Lens",
+          value: "Cross-modal",
+          detail: "The work focused on representation alignment across ASR, translation, and speech synthesis stages.",
+        },
+        {
+          label: "Validation Mode",
+          value: "BLEU-tracked",
+          detail: "Quality stayed benchmarked across multilingual datasets instead of being judged informally.",
+        },
       ],
       outcomes: [
         "Reduced model training cost by 90% while sustaining high BLEU translation accuracy.",
@@ -724,6 +998,12 @@ const dataScientistProfile: PortfolioData = {
       techStack: ["Python", "XGBoost", "Random Forest", "SHAP", "Plotly", "Walk-Forward Validation"],
       problem: "It was unclear whether external sentiment signals improved stock forecasting enough to justify the added pipeline complexity, and the analytical results needed better interpretability.",
       context: "Adapted from the data scientist resume to emphasize modeling, walk-forward validation, feature attribution, and analytical interpretation instead of only the data pipeline mechanics.",
+      stakes: "If sentiment features added noise without disciplined validation or interpretability, the model could appear impressive while still giving stakeholders little reason to trust its next-day forecast behavior.",
+      ownership: [
+        "Framed the forecasting problem around time-aware validation instead of one-time train/test accuracy.",
+        "Engineered the sentiment and technical feature set used across the forecasting experiments.",
+        "Built the interpretability layer that explained how external sentiment affected model output and volatility signals.",
+      ],
       goals: [
         "Measure whether sentiment data improved next-day forecasting beyond technical indicators alone.",
         "Use walk-forward validation to evaluate performance under more realistic market shifts.",
@@ -735,10 +1015,41 @@ const dataScientistProfile: PortfolioData = {
         "Trained and evaluated XGBoost and Random Forest models with walk-forward cross-validation and confidence intervals.",
         "Applied SHAP attribution and correlation analysis to explain how market sentiment influenced price volatility and model output.",
       ],
+      decisions: [
+        {
+          title: "Walk-forward instead of static validation",
+          detail: "Used rolling evaluation windows so the forecast quality reflected changing market conditions instead of a single fixed split.",
+        },
+        {
+          title: "Interpretability alongside accuracy",
+          detail: "Paired SHAP and correlation analysis with the forecast models because sentiment-driven signals are difficult to trust without clear attribution.",
+        },
+        {
+          title: "Feature comparison discipline",
+          detail: "Measured sentiment-enhanced models against technical baselines so the added pipeline complexity had to earn its place analytically.",
+        },
+      ],
       flow: "Market Data + Sentiment APIs -> Feature Engineering -> Walk-Forward Validation -> Forecast Models -> SHAP & Plotly Analysis",
       challenges: [
         "Avoiding optimistic evaluation when market regimes changed across the validation window.",
         "Separating genuinely predictive sentiment features from noisy external signals.",
+      ],
+      impactMetrics: [
+        {
+          label: "Forecast Lens",
+          value: "Next-day",
+          detail: "The workflow focused on short-horizon price movement with time-aware validation.",
+        },
+        {
+          label: "Signal Mix",
+          value: "Technical + sentiment",
+          detail: "Combined price indicators with Reddit, Guardian, and NYT-derived external features.",
+        },
+        {
+          label: "Interpretability",
+          value: "SHAP-backed",
+          detail: "Model explanations were visible enough for both technical review and stakeholder discussion.",
+        },
       ],
       outcomes: [
         "Delivered next-day price forecasts with interpretable views of the most influential market drivers.",
@@ -762,6 +1073,12 @@ const dataScientistProfile: PortfolioData = {
       techStack: ["PySpark", "SQL", "MLflow", "Evidently AI", "Python", "Window Functions"],
       problem: "Airline delay and sentiment behavior changed across routes and seasons, making static analyses stale and leaving teams slow to respond when model assumptions drifted.",
       context: "Built from the current repo case study and the data scientist resume to keep the emphasis on distributed analytics, monitoring, and earlier detection of changing model behavior.",
+      stakes: "If drift stayed invisible, teams would continue trusting model outputs that no longer reflected route-level behavior, which would erode the usefulness of the forecasting and reporting workflow over time.",
+      ownership: [
+        "Built the distributed route-level analytics workflow on top of the large historical flight dataset.",
+        "Integrated the monitoring stack that surfaced changing performance and sentiment patterns across seasons.",
+        "Connected the output to retraining and review decisions so monitoring changed behavior instead of staying passive.",
+      ],
       goals: [
         "Process 2.15M+ flight records in a distributed workflow suitable for route and season-level analysis.",
         "Detect sentiment and model drift automatically so degradation became visible earlier.",
@@ -773,10 +1090,41 @@ const dataScientistProfile: PortfolioData = {
         "Implemented automated drift detection with Evidently AI and MLflow to monitor performance degradation across seasonal changes.",
         "Structured the workflow to reduce manual reporting effort and surface retraining signals earlier in the model lifecycle.",
       ],
+      decisions: [
+        {
+          title: "Season-aware drift analysis",
+          detail: "Compared route behavior in temporal context so expected seasonal variance did not masquerade as model failure.",
+        },
+        {
+          title: "Experiment tracking with monitoring",
+          detail: "Used MLflow and Evidently together so observed drift could be tied back to model lineage and evaluation history.",
+        },
+        {
+          title: "Operational retraining signal",
+          detail: "Shaped the output to answer when intervention was warranted, not simply to log changes for later review.",
+        },
+      ],
       flow: "Flight Records -> PySpark Processing -> Route & Delay Features -> Drift Monitoring -> Performance Review -> Retraining Signals",
       challenges: [
         "Separating true model drift from normal seasonal behavior across routes and operating periods.",
         "Making the monitoring signal useful to both analysts and model owners.",
+      ],
+      impactMetrics: [
+        {
+          label: "Record Scale",
+          value: "2.15M+",
+          detail: "The monitoring workflow operated over a large enough history to support route-level analysis.",
+        },
+        {
+          label: "Reporting Effort",
+          value: "-40%",
+          detail: "Automated drift analysis reduced recurring manual review work.",
+        },
+        {
+          label: "Retraining Lag",
+          value: "-30%",
+          detail: "Earlier drift visibility shortened the time to respond when assumptions changed.",
+        },
       ],
       outcomes: [
         "Processed 2.15M+ flight records in a pipeline that reduced manual reporting effort by 40%.",
@@ -938,6 +1286,12 @@ const dataAnalystProfile: PortfolioData = {
       techStack: ["Python", "SQL", "SHAP", "Cross-Validation", "SMOTE", "Plotly"],
       problem: "Borrower risk signals were difficult to explain transparently, and the analysis needed both reliable validation and stakeholder-friendly views of the most important default drivers.",
       context: "Built from the data analyst resume project to emphasize analytical framing, validation discipline, and stakeholder communication instead of only predictive model performance.",
+      stakes: "If the analysis could not explain default risk clearly, stakeholders would struggle to trust the recommendations, especially when higher-recall behavior on risky borrower segments came with more nuanced tradeoffs.",
+      ownership: [
+        "Framed the risk analysis around explainability and stakeholder review, not only around model accuracy.",
+        "Built the validation path that handled class imbalance and preserved visibility into high-risk borrower behavior.",
+        "Translated the strongest signals into dashboard views that business stakeholders could interpret without losing analytical nuance.",
+      ],
       goals: [
         "Identify the borrower attributes most associated with default risk across segments.",
         "Use reliable validation on imbalanced data so high-risk behavior was not hidden by average accuracy alone.",
@@ -949,10 +1303,41 @@ const dataAnalystProfile: PortfolioData = {
         "Implemented validation and SMOTE-based resampling to keep the analysis reliable across imbalanced borrower profiles.",
         "Built SHAP-driven reporting views that explained the strongest risk drivers for business stakeholders and review contexts.",
       ],
+      decisions: [
+        {
+          title: "Explainability over black-box scoring",
+          detail: "Used SHAP-backed reporting because stakeholder confidence depended on understanding which borrower attributes drove risk, not just on receiving a score.",
+        },
+        {
+          title: "Imbalance-aware validation",
+          detail: "Handled the skewed borrower distribution explicitly so default-risk performance was not hidden behind average-case metrics.",
+        },
+        {
+          title: "Dashboard-led communication",
+          detail: "Turned the output into review-friendly analytical views so the findings could support lending discussions rather than stay locked in notebook form.",
+        },
+      ],
       flow: "Borrower Data -> Feature Engineering -> Validation & Sampling -> Risk Analysis -> SHAP Dashboards",
       challenges: [
         "Balancing analytical transparency with the need to improve recall on high-risk borrower profiles.",
         "Making the results interpretable enough for non-technical stakeholders without flattening the underlying nuance.",
+      ],
+      impactMetrics: [
+        {
+          label: "Model Accuracy",
+          value: "77%",
+          detail: "Delivered credible predictive performance while keeping the analysis interpretable.",
+        },
+        {
+          label: "Decision Lens",
+          value: "Risk drivers",
+          detail: "The analysis highlighted which borrower attributes most influenced default exposure.",
+        },
+        {
+          label: "Delivery Mode",
+          value: "SHAP dashboards",
+          detail: "Business and review stakeholders could inspect the same analytical logic visually.",
+        },
       ],
       outcomes: [
         "Achieved 77% prediction accuracy with stronger recall on high-risk default cases.",
@@ -976,6 +1361,12 @@ const dataAnalystProfile: PortfolioData = {
       techStack: ["Python", "Plotly", "SHAP", "SQL", "Reddit API", "NYT API"],
       problem: "Market and sentiment signals were difficult to compare consistently, and the analysis needed clearer views of which factors actually mattered to stakeholders reviewing the results.",
       context: "Reframed from the Tesla forecasting project to center correlation analysis, feature importance, and dashboard communication for technical and non-technical audiences.",
+      stakes: "If the market narrative stayed buried inside disconnected sentiment pulls and technical indicators, stakeholders would get activity charts without clarity on which factors were actually moving next-day price behavior.",
+      ownership: [
+        "Built the analytical feature set combining technical indicators with external sentiment sources.",
+        "Ran the attribution and correlation analysis that separated meaningful drivers from noise.",
+        "Turned the outputs into dashboard views that made the market story discussable for mixed audiences.",
+      ],
       goals: [
         "Test whether sentiment meaningfully improved market analysis beyond technical indicators alone.",
         "Pinpoint the most influential price drivers and explain them clearly.",
@@ -987,10 +1378,41 @@ const dataAnalystProfile: PortfolioData = {
         "Used feature attribution and correlation analysis to isolate the most influential drivers of price movement.",
         "Built interactive dashboard views that translated complex market signals into clearer stakeholder-facing narratives.",
       ],
+      decisions: [
+        {
+          title: "Attribution before storytelling",
+          detail: "Used feature-importance analysis to ground the dashboard narrative in measurable drivers rather than presenting sentiment activity as inherently meaningful.",
+        },
+        {
+          title: "Interactive over static reporting",
+          detail: "Built Plotly views so stakeholders could inspect changing signal relationships instead of relying on one static summary slide.",
+        },
+        {
+          title: "Technical baseline comparison",
+          detail: "Judged sentiment against concrete market indicators so the analysis could explain whether external feeds added real signal value.",
+        },
+      ],
       flow: "Market Data + Sentiment APIs -> Analytical Feature Set -> Correlation & Attribution -> Plotly Dashboards -> Stakeholder Review",
       challenges: [
         "Separating noisy external sentiment from signals that genuinely improved the analysis.",
         "Presenting nuanced market drivers in a way that technical and non-technical audiences could both use.",
+      ],
+      impactMetrics: [
+        {
+          label: "History Window",
+          value: "2+ years",
+          detail: "The analysis covered enough market history to compare technical and sentiment behavior over time.",
+        },
+        {
+          label: "Driver Clarity",
+          value: "Top 5",
+          detail: "SHAP-based analysis surfaced the strongest contributors to next-day price behavior.",
+        },
+        {
+          label: "Delivery Mode",
+          value: "Interactive",
+          detail: "Stakeholders could inspect the relationships through dashboards instead of static summaries.",
+        },
       ],
       outcomes: [
         "Identified the five most influential price drivers through SHAP-based analysis.",
@@ -1014,6 +1436,12 @@ const dataAnalystProfile: PortfolioData = {
       techStack: ["SQL", "Python", "Power BI", "Tableau", "DAX", "Snowflake"],
       problem: "Operations leaders lacked a consistent analytical view of cost anomalies, variance trends, and production KPIs across business units, leading to slow and repetitive ad hoc reporting.",
       context: "Reframed from the Sonaflex experience to highlight SQL analysis, dashboard delivery, KPI tracking, and stakeholder-facing operational insights rather than platform internals.",
+      stakes: "If leaders kept relying on fragmented KPI logic and ad hoc extracts, operational reviews would stay reactive, reporting errors would persist, and analysts would spend time rebuilding the same answers repeatedly.",
+      ownership: [
+        "Built the analytical reporting layer over the unified manufacturing datasets.",
+        "Defined KPI and variance views that leadership teams could use repeatedly across review cycles.",
+        "Added validation logic that reduced reporting errors and made self-serve dashboards more trustworthy.",
+      ],
       goals: [
         "Create a reliable reporting foundation for KPI dashboards and recurring leadership reviews.",
         "Use SQL and Python analysis to isolate anomalies and explain operational variance clearly.",
@@ -1025,10 +1453,41 @@ const dataAnalystProfile: PortfolioData = {
         "Built Tableau and Power BI dashboards with DAX scripting to track more than 10 production KPIs in near real time.",
         "Investigated ERP discrepancies and implemented automated validation rules to reduce reporting errors and speed turnaround.",
       ],
+      decisions: [
+        {
+          title: "Reusable KPI layer",
+          detail: "Centered the reporting workflow on stable KPI definitions so executive reviews and analyst drilldowns referenced the same analytical logic.",
+        },
+        {
+          title: "Self-serve with guardrails",
+          detail: "Expanded dashboard access only alongside validation rules so leaders could move faster without increasing mistrust in the numbers.",
+        },
+        {
+          title: "Operational storytelling",
+          detail: "Designed dashboards to explain anomalies and variance patterns clearly instead of only listing metric totals.",
+        },
+      ],
       flow: "Operational Data -> SQL Analysis -> KPI Modeling -> Tableau & Power BI Dashboards -> Leadership Reporting",
       challenges: [
         "Keeping KPI definitions and analytical logic consistent across business units and reporting cycles.",
         "Balancing executive-ready simplicity with the deeper drilldowns analysts needed for root-cause work.",
+      ],
+      impactMetrics: [
+        {
+          label: "Business Units",
+          value: "5+",
+          detail: "One reporting workflow served multiple operating groups with shared KPI logic.",
+        },
+        {
+          label: "Operational Decisions",
+          value: "$500K+",
+          detail: "The dashboards supported substantial cost and variance review decisions.",
+        },
+        {
+          label: "Ad Hoc Requests",
+          value: "-35%",
+          detail: "Self-serve reporting reduced repeated manual analysis work.",
+        },
       ],
       outcomes: [
         "Supported more than $500K in operational decisions by surfacing cost anomalies and variance trends clearly.",

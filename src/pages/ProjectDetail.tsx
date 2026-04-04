@@ -3,29 +3,155 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import { motion } from "motion/react";
-import { ArrowLeft, ExternalLink, Github, ChevronRight, CheckCircle2, AlertCircle, Layers, Workflow, Target, Zap } from "lucide-react";
-import { defaultProfileSlug, isProfileSlug, portfolioProfiles } from "../data/portfolioData";
-import { SDEScene, DEScene, DSScene } from "../components/3d/ProjectScenes";
-import { SceneLights, AmbientParticles } from "../components/3d/Common";
-import { Layout, Footer } from "../components/Layout";
-import { useEffect, ReactNode } from "react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  FileText,
+  Gauge,
+  type LucideIcon,
+  Radar,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Waypoints,
+  Workflow,
+} from "lucide-react";
+import { useEffect, type ComponentType, type ReactNode } from "react";
+import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import { AmbientParticles, SceneLights } from "../components/3d/Common";
+import {
+  DataAnalystScene,
+  DataEngineerScene,
+  DataScientistScene,
+  SoftwareEngineerScene,
+} from "../components/3d/ProjectScenes";
+import { Footer, Layout } from "../components/Layout";
+import { defaultProfileSlug, isProfileSlug, portfolioProfiles, type ProfileSlug } from "../data/portfolioData";
 import { useSoundInteractions } from "../audio/useSoundInteractions";
 import { getProfileHashPath, getProfileHomePath, getProfileProjectPath } from "../utils/profileRoutes";
+
+type DetailTheme = {
+  accentHex: string;
+  secondaryHex: string;
+  ambientHex: string;
+  eyebrow: string;
+  strapline: string;
+  scene: ComponentType;
+};
+
+const detailThemes: Record<ProfileSlug, DetailTheme> = {
+  dataengineer: {
+    accentHex: "#f59e0b",
+    secondaryHex: "#34d399",
+    ambientHex: "#34d399",
+    eyebrow: "Data Platform Case Study",
+    strapline: "Pipeline design, warehouse discipline, and delivery reliability built for repeated operational use.",
+    scene: DataEngineerScene,
+  },
+  softwareengineer: {
+    accentHex: "#38bdf8",
+    secondaryHex: "#22d3ee",
+    ambientHex: "#22d3ee",
+    eyebrow: "Software Engineering Case Study",
+    strapline: "Application architecture, backend execution, and release-ready workflows shaped into dependable systems.",
+    scene: SoftwareEngineerScene,
+  },
+  datascientist: {
+    accentHex: "#c084fc",
+    secondaryHex: "#f472b6",
+    ambientHex: "#d946ef",
+    eyebrow: "Data Science Case Study",
+    strapline: "Modeling, validation, and monitoring choices surfaced as a system, not just an experiment.",
+    scene: DataScientistScene,
+  },
+  datanalyst: {
+    accentHex: "#14b8a6",
+    secondaryHex: "#f59e0b",
+    ambientHex: "#5eead4",
+    eyebrow: "Analytics Case Study",
+    strapline: "Analytical framing, KPI clarity, and dashboard delivery built to support real stakeholder decisions.",
+    scene: DataAnalystScene,
+  },
+};
+
+function rgba(hex: string, alpha: number) {
+  const value = hex.replace("#", "");
+  const normalized = value.length === 3 ? value.split("").map((char) => `${char}${char}`).join("") : value;
+  const int = Number.parseInt(normalized, 16);
+  const r = (int >> 16) & 255;
+  const g = (int >> 8) & 255;
+  const b = int & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 function ScrollReveal({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
+      viewport={{ once: true, amount: 0.18 }}
       transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
       className={className}
     >
       {children}
     </motion.div>
+  );
+}
+
+function SectionHeading({
+  icon: Icon,
+  eyebrow,
+  title,
+  description,
+  accentHex,
+}: {
+  icon: LucideIcon;
+  eyebrow: string;
+  title: string;
+  description: string;
+  accentHex: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.28em] text-gray-400">
+        <Icon size={14} style={{ color: accentHex }} />
+        <span>{eyebrow}</span>
+      </div>
+      <div className="max-w-3xl space-y-3">
+        <h2 className="text-3xl font-bold tracking-tight text-white md:text-4xl">{title}</h2>
+        <p className="text-base leading-relaxed text-gray-400 md:text-lg">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function AccentPanel({
+  children,
+  accentHex,
+  className = "",
+}: {
+  children: ReactNode;
+  accentHex: string;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-[1.9rem] border bg-zinc-950/72 p-6 backdrop-blur-xl md:p-7 ${className}`}
+      style={{
+        borderColor: rgba(accentHex, 0.16),
+        boxShadow: `0 24px 90px ${rgba(accentHex, 0.08)}`,
+      }}
+    >
+      <div
+        aria-hidden
+        className="absolute inset-x-6 top-0 h-px"
+        style={{ background: `linear-gradient(90deg, transparent, ${rgba(accentHex, 0.75)}, transparent)` }}
+      />
+      {children}
+    </div>
   );
 }
 
@@ -37,6 +163,10 @@ export default function ProjectDetail() {
   const portfolioData = portfolioProfiles[profileSlug];
   const projectIndex = portfolioData.projects.findIndex((entry) => entry.id === id);
   const project = projectIndex >= 0 ? portfolioData.projects[projectIndex] : null;
+  const nextProject = project ? portfolioData.projects[(projectIndex + 1) % portfolioData.projects.length] : null;
+  const theme = detailThemes[profileSlug];
+  const Scene = theme.scene;
+  const flowSteps = project ? project.flow.split(" -> ").map((step) => step.trim()).filter(Boolean) : [];
   const { withClickSound, withHoverSound } = useSoundInteractions();
 
   useEffect(() => {
@@ -56,252 +186,362 @@ export default function ProjectDetail() {
     );
   }
 
-  if (!project) {
+  if (!project || !nextProject) {
     return <Navigate replace to={getProfileHomePath(profileSlug)} />;
   }
-
-  const Scene = project.type === "AI" ? SDEScene : project.type === "DE" ? DEScene : DSScene;
-  const accentColor = project.type === "AI" ? "#3b82f6" : project.type === "DE" ? "#f59e0b" : "#8b5cf6";
-  const accentText = project.type === "AI" ? "text-blue-400" : project.type === "DE" ? "text-amber-400" : "text-purple-400";
-  const accentBg = project.type === "AI" ? "bg-blue-500/10" : project.type === "DE" ? "bg-amber-500/10" : "bg-purple-500/10";
-  const nextProject = portfolioData.projects[(projectIndex + 1) % portfolioData.projects.length];
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
     >
       <Layout profileSlug={profileSlug} portfolioData={portfolioData}>
-        {/* Project Hero */}
-      <section className="relative h-[70vh] w-full flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Canvas camera={{ position: [0, 0, 5], fov: 75 }}>
-            <SceneLights />
-            <AmbientParticles count={1000} color={accentColor} />
-            <Scene />
-          </Canvas>
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black" />
-        </div>
+        <section className="relative overflow-hidden border-b border-white/8">
+          <div className="absolute inset-0">
+            <Canvas camera={{ position: [0, 0, 6.4], fov: 52 }}>
+              <fog attach="fog" args={["#050505", 7, 16]} />
+              <SceneLights />
+              <AmbientParticles count={920} color={theme.ambientHex} />
+              <Scene />
+            </Canvas>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.06),transparent_32%)]" />
+            <div
+              className="absolute inset-x-0 top-0 h-[42vh]"
+              style={{ background: `radial-gradient(circle at top, ${rgba(theme.accentHex, 0.22)}, transparent 68%)` }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/55 to-black" />
+          </div>
 
-        <div className="relative z-10 max-w-4xl mx-auto px-6 pt-20 text-center md:pt-24">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
+          <div className="relative z-10 mx-auto flex min-h-[88vh] max-w-7xl flex-col justify-end px-6 pb-14 pt-32 md:pb-16 xl:pb-18">
             <Link
               to={getProfileHashPath(profileSlug, "projects")}
               onClick={withClickSound()}
-              className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-8 text-sm font-bold uppercase tracking-widest"
+              onMouseEnter={withHoverSound(`detail-back-${project.id}`)}
+              onFocus={withHoverSound(`detail-back-${project.id}`)}
+              className="mb-8 inline-flex items-center text-sm font-bold uppercase tracking-[0.24em] text-gray-400 transition-colors hover:text-white"
             >
               <ArrowLeft size={16} className="mr-2" /> Back to Projects
             </Link>
-            <h1 className="text-5xl md:text-8xl font-bold text-white tracking-tighter mb-6 leading-none">
-              {project.title}
-            </h1>
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              <span className={`px-4 py-1 rounded-full border border-white/10 text-xs font-bold uppercase tracking-widest ${accentBg} ${accentText}`}>
-                {project.typeLabel}
-              </span>
-              <span className="px-4 py-1 rounded-full border border-white/10 text-xs font-bold uppercase tracking-widest bg-white/5 text-gray-400">
-                {project.domain}
-              </span>
-            </div>
-          </motion.div>
-        </div>
-      </section>
 
-      {/* Overview Grid */}
-      <section className="py-20 px-6 border-b border-white/5">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
-          <div className="md:col-span-2">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-4">Summary</h2>
-            <p className="text-xl text-gray-300 leading-relaxed">{project.summary}</p>
-          </div>
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-4">Role</h2>
-            <p className="text-gray-400 font-medium">{project.role}</p>
-          </div>
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-4">Stack</h2>
-            <div className="flex flex-wrap gap-2">
-              {project.techStack.map((tech) => (
-                <span key={tech} className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 bg-white/5 border border-white/10 rounded text-gray-500">
-                  {tech}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Case Study Content */}
-      <section className="py-32 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-20">
-            {/* Main Content */}
-            <div className="lg:col-span-8 space-y-32">
-              {/* Context & Problem */}
-              <ScrollReveal className="space-y-12">
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-4 text-emerald-400">
-                    <AlertCircle size={24} />
-                    <h3 className="text-2xl font-bold text-white">The Problem</h3>
-                  </div>
-                  <p className="text-gray-400 text-lg leading-relaxed">{project.problem}</p>
+            <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_360px] xl:items-end">
+              <div className="max-w-4xl">
+                <div className="mb-6 flex flex-wrap items-center gap-3">
+                  <span
+                    className="inline-flex items-center rounded-full border px-4 py-2 text-[11px] font-bold uppercase tracking-[0.26em]"
+                    style={{
+                      color: theme.accentHex,
+                      borderColor: rgba(theme.accentHex, 0.24),
+                      backgroundColor: rgba(theme.accentHex, 0.1),
+                    }}
+                  >
+                    {theme.eyebrow}
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.26em] text-gray-400">
+                    {project.typeLabel}
+                  </span>
+                  <span className="rounded-full border border-white/10 bg-black/30 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.26em] text-gray-400">
+                    {project.domain}
+                  </span>
                 </div>
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-4 text-emerald-400">
-                    <Target size={24} />
-                    <h3 className="text-2xl font-bold text-white">The Context</h3>
-                  </div>
-                  <p className="text-gray-400 text-lg leading-relaxed">{project.context}</p>
-                </div>
-              </ScrollReveal>
 
-              {/* Architecture & Flow */}
-              <ScrollReveal className="space-y-12">
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-4 text-emerald-400">
-                    <Layers size={24} />
-                    <h3 className="text-2xl font-bold text-white">Architecture Overview</h3>
-                  </div>
-                  <p className="text-gray-400 text-lg leading-relaxed">{project.architecture}</p>
-                  <div className="p-8 bg-zinc-900/50 border border-white/10 rounded-2xl">
-                    <h4 className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-6">System Flow</h4>
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                      {project.flow.split(" -> ").map((step, i, arr) => (
-                        <div key={step} className="flex items-center w-full md:w-auto">
-                          <div className="flex-1 text-center p-4 bg-white/5 border border-white/5 rounded-xl text-sm font-medium text-gray-300">
-                            {step}
-                          </div>
-                          {i < arr.length - 1 && (
-                            <div className="hidden md:block mx-4 text-gray-600">
-                              <ChevronRight size={20} />
-                            </div>
-                          )}
-                        </div>
+                <h1 className="max-w-5xl text-5xl font-bold leading-[0.92] tracking-[-0.04em] text-white md:text-7xl xl:text-[5.6rem]">
+                  {project.title}
+                </h1>
+                <p className="mt-5 max-w-3xl text-lg leading-relaxed text-gray-300 md:text-xl">{project.summary}</p>
+                <p className="mt-4 max-w-3xl text-sm leading-relaxed text-gray-500 md:text-base">{theme.strapline}</p>
+
+                <div className="mt-8 grid gap-4 md:grid-cols-3">
+                  <AccentPanel accentHex={theme.accentHex} className="p-5 md:p-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Role Lens</p>
+                    <p className="mt-3 text-lg font-semibold text-white">{project.role}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-gray-400">{portfolioData.personal.headline}</p>
+                  </AccentPanel>
+                  <AccentPanel accentHex={theme.accentHex} className="p-5 md:p-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Business Stakes</p>
+                    <p className="mt-3 text-sm leading-relaxed text-gray-300">{project.stakes}</p>
+                  </AccentPanel>
+                  <AccentPanel accentHex={theme.accentHex} className="p-5 md:p-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Core Stack</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {project.techStack.slice(0, 4).map((tech) => (
+                        <span key={tech} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] text-gray-300">
+                          {tech}
+                        </span>
                       ))}
                     </div>
-                  </div>
+                  </AccentPanel>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
+                {project.impactMetrics.map((metric) => (
+                  <AccentPanel key={metric.label} accentHex={theme.secondaryHex} className="min-h-[148px] p-5 md:p-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">{metric.label}</p>
+                    <p className="mt-3 text-3xl font-bold tracking-tight text-white">{metric.value}</p>
+                    <p className="mt-3 text-sm leading-relaxed text-gray-400">{metric.detail}</p>
+                  </AccentPanel>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="relative px-6 py-20 md:py-24">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-0 top-24 h-64 w-64 rounded-full blur-[140px]"
+            style={{ backgroundColor: rgba(theme.accentHex, 0.12) }}
+          />
+          <div className="mx-auto grid max-w-7xl gap-8 xl:grid-cols-[minmax(0,1.12fr)_360px]">
+            <div className="space-y-10">
+              <ScrollReveal className="space-y-6">
+                <SectionHeading
+                  icon={Target}
+                  eyebrow="Problem Framing"
+                  title="The problem, the business stakes, and the delivery lens."
+                  description="This section makes the work legible fast: what had to change, why it mattered, and how the project was framed from this role's perspective."
+                  accentHex={theme.accentHex}
+                />
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <AccentPanel accentHex={theme.accentHex}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">The Problem</p>
+                    <p className="mt-4 text-base leading-relaxed text-gray-300">{project.problem}</p>
+                  </AccentPanel>
+                  <AccentPanel accentHex={theme.secondaryHex}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Why It Mattered</p>
+                    <p className="mt-4 text-base leading-relaxed text-gray-300">{project.stakes}</p>
+                  </AccentPanel>
                 </div>
               </ScrollReveal>
 
-              {/* Implementation Details */}
-              <ScrollReveal className="space-y-12">
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-4 text-emerald-400">
-                    <Workflow size={24} />
-                    <h3 className="text-2xl font-bold text-white">Implementation Details</h3>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {project.implementation.map((detail, i) => (
-                      <div key={i} className="p-6 bg-zinc-900/30 border border-white/5 rounded-2xl">
-                        <p className="text-gray-400 text-sm leading-relaxed">{detail}</p>
+              <ScrollReveal className="space-y-6">
+                <SectionHeading
+                  icon={Radar}
+                  eyebrow="Context and Ownership"
+                  title="The context, scope, and the work I directly carried."
+                  description="The page now calls out concrete ownership instead of leaving the reader to infer it from generic summary text."
+                  accentHex={theme.accentHex}
+                />
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
+                  <AccentPanel accentHex={theme.accentHex}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Project Context</p>
+                    <p className="mt-4 text-base leading-relaxed text-gray-300">{project.context}</p>
+                  </AccentPanel>
+                  <AccentPanel accentHex={theme.secondaryHex}>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Role Ownership</p>
+                    <ul className="mt-4 space-y-4">
+                      {project.ownership.map((item) => (
+                        <li key={item} className="flex items-start gap-3 text-sm leading-relaxed text-gray-300">
+                          <ShieldCheck size={16} className="mt-0.5 shrink-0" style={{ color: theme.secondaryHex }} />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </AccentPanel>
+                </div>
+              </ScrollReveal>
+
+              <ScrollReveal className="space-y-6">
+                <SectionHeading
+                  icon={Waypoints}
+                  eyebrow="Architecture and Flow"
+                  title="System design translated into a clearer, non-overlapping workflow view."
+                  description="The old wide single-row flow caused collisions with the side rail. This version keeps the architecture readable at laptop widths and still feels deliberate on large screens."
+                  accentHex={theme.accentHex}
+                />
+                <AccentPanel accentHex={theme.accentHex}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Architecture Overview</p>
+                  <p className="mt-4 text-base leading-relaxed text-gray-300">{project.architecture}</p>
+                  <div className="mt-8 grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
+                    {flowSteps.map((step, index) => (
+                      <div
+                        key={`${step}-${index}`}
+                        className="rounded-[1.5rem] border border-white/10 bg-black/30 p-5"
+                        style={{ boxShadow: `0 20px 50px ${rgba(theme.accentHex, 0.06)}` }}
+                      >
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <span
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold uppercase tracking-[0.16em]"
+                            style={{
+                              color: theme.accentHex,
+                              backgroundColor: rgba(theme.accentHex, 0.12),
+                              border: `1px solid ${rgba(theme.accentHex, 0.22)}`,
+                            }}
+                          >
+                            {String(index + 1).padStart(2, "0")}
+                          </span>
+                          {index < flowSteps.length - 1 ? <ArrowRight size={16} className="text-gray-600" /> : <CheckCircle2 size={16} className="text-gray-500" />}
+                        </div>
+                        <p className="text-sm font-medium leading-relaxed text-gray-200">{step}</p>
                       </div>
                     ))}
                   </div>
-                </div>
+                </AccentPanel>
               </ScrollReveal>
 
-              {/* Outcomes & Impact */}
-              <ScrollReveal className="space-y-12">
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-4 text-emerald-400">
-                    <Zap size={24} />
-                    <h3 className="text-2xl font-bold text-white">Outcomes & Impact</h3>
+              <ScrollReveal className="space-y-6">
+                <SectionHeading
+                  icon={Workflow}
+                  eyebrow="Implementation"
+                  title="The main execution moves and the technical decisions behind them."
+                  description="This is where the page shifts from outcome headlines into the practical engineering, modeling, or analytical choices that made the project work."
+                  accentHex={theme.accentHex}
+                />
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <div className="grid gap-4">
+                    {project.implementation.map((detail, index) => (
+                      <AccentPanel key={detail} accentHex={theme.accentHex}>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Implementation {index + 1}</p>
+                        <p className="mt-4 text-sm leading-relaxed text-gray-300">{detail}</p>
+                      </AccentPanel>
+                    ))}
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {project.outcomes.map((outcome, i) => (
-                      <div key={i} className="p-8 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl text-center">
-                        <CheckCircle2 size={32} className="text-emerald-500 mx-auto mb-4" />
-                        <p className="text-white font-medium">{outcome}</p>
-                      </div>
+                  <div className="grid gap-4">
+                    {project.decisions.map((decision) => (
+                      <AccentPanel key={decision.title} accentHex={theme.secondaryHex}>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">{decision.title}</p>
+                        <p className="mt-4 text-sm leading-relaxed text-gray-300">{decision.detail}</p>
+                      </AccentPanel>
                     ))}
                   </div>
                 </div>
               </ScrollReveal>
             </div>
 
-            {/* Sidebar / Meta */}
-            <ScrollReveal className="lg:col-span-4 space-y-12">
-              <div className="sticky top-32 space-y-12">
-                <div className="p-8 bg-zinc-900/50 border border-white/10 rounded-2xl">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-6">Goals</h4>
-                  <ul className="space-y-4">
-                    {project.goals.map((goal, i) => (
-                      <li key={i} className="text-gray-400 text-sm flex items-start">
-                        <span className="text-emerald-500 mr-3 mt-1">•</span>
-                        {goal}
+            <div className="space-y-6 xl:pt-1 2xl:sticky 2xl:top-28 2xl:self-start">
+              <ScrollReveal>
+                <AccentPanel accentHex={theme.accentHex}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Goals</p>
+                  <ul className="mt-4 space-y-4">
+                    {project.goals.map((goal) => (
+                      <li key={goal} className="flex items-start gap-3 text-sm leading-relaxed text-gray-300">
+                        <Target size={16} className="mt-0.5 shrink-0" style={{ color: theme.accentHex }} />
+                        <span>{goal}</span>
                       </li>
                     ))}
                   </ul>
-                </div>
+                </AccentPanel>
+              </ScrollReveal>
 
-                <div className="p-8 bg-zinc-900/50 border border-white/10 rounded-2xl">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-6">Challenges</h4>
-                  <ul className="space-y-4">
-                    {project.challenges.map((challenge, i) => (
-                      <li key={i} className="text-gray-400 text-sm flex items-start">
-                        <span className="text-red-400 mr-3 mt-1">•</span>
-                        {challenge}
+              <ScrollReveal>
+                <AccentPanel accentHex={theme.secondaryHex}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Technical Foundation</p>
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    {project.techStack.map((tech) => (
+                      <span
+                        key={tech}
+                        className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.22em] text-gray-300"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </AccentPanel>
+              </ScrollReveal>
+
+              <ScrollReveal>
+                <AccentPanel accentHex={theme.secondaryHex}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Constraints Navigated</p>
+                  <ul className="mt-4 space-y-4">
+                    {project.challenges.map((challenge) => (
+                      <li key={challenge} className="flex items-start gap-3 text-sm leading-relaxed text-gray-300">
+                        <Gauge size={16} className="mt-0.5 shrink-0" style={{ color: theme.secondaryHex }} />
+                        <span>{challenge}</span>
                       </li>
                     ))}
                   </ul>
+                </AccentPanel>
+              </ScrollReveal>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-6 pb-24">
+          <div className="mx-auto max-w-7xl space-y-6">
+            <ScrollReveal className="space-y-6">
+              <SectionHeading
+                icon={Sparkles}
+                eyebrow="Outcomes and Signal"
+                title="What changed, what the results say, and what hiring teams should take away."
+                description="The goal here is not just to list outcomes, but to make the depth, rigor, and role fit obvious to a recruiter in one fast scan."
+                accentHex={theme.accentHex}
+              />
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.12fr)_360px]">
+                <div className="grid gap-4 md:grid-cols-3">
+                  {project.outcomes.map((outcome, index) => (
+                    <AccentPanel key={outcome} accentHex={index % 2 === 0 ? theme.accentHex : theme.secondaryHex} className="min-h-[220px]">
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Outcome {index + 1}</span>
+                        <CheckCircle2 size={18} style={{ color: index % 2 === 0 ? theme.accentHex : theme.secondaryHex }} />
+                      </div>
+                      <p className="mt-4 text-base leading-relaxed text-white">{outcome}</p>
+                    </AccentPanel>
+                  ))}
                 </div>
 
-                <div className="p-8 bg-zinc-900/50 border border-white/10 rounded-2xl">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-6">Lessons Learned</h4>
-                  <ul className="space-y-4">
-                    {project.lessons.map((lesson, i) => (
-                      <li key={i} className="text-gray-400 text-sm flex items-start">
-                        <span className="text-blue-400 mr-3 mt-1">•</span>
-                        {lesson}
+                <AccentPanel accentHex={theme.secondaryHex}>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">What This Signals</p>
+                  <ul className="mt-4 space-y-4">
+                    {project.lessons.map((lesson) => (
+                      <li key={lesson} className="flex items-start gap-3 text-sm leading-relaxed text-gray-300">
+                        <Sparkles size={16} className="mt-0.5 shrink-0" style={{ color: theme.secondaryHex }} />
+                        <span>{lesson}</span>
                       </li>
                     ))}
                   </ul>
-                </div>
-
-                <div className="flex flex-col space-y-4">
-                  <button
-                    onClick={withClickSound()}
-                    onMouseEnter={withHoverSound(`detail-source-${project.id}`)}
-                    onFocus={withHoverSound(`detail-source-${project.id}`)}
-                    className="w-full py-4 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-full hover:bg-emerald-500 hover:text-white transition-all flex items-center justify-center"
-                  >
-                    <Github size={18} className="mr-2" /> View Source Code
-                  </button>
-                  <button
-                    onClick={withClickSound()}
-                    onMouseEnter={withHoverSound(`detail-demo-${project.id}`)}
-                    onFocus={withHoverSound(`detail-demo-${project.id}`)}
-                    className="w-full py-4 border border-white/20 text-white text-xs font-bold uppercase tracking-widest rounded-full hover:bg-white/5 transition-all flex items-center justify-center"
-                  >
-                    <ExternalLink size={18} className="mr-2" /> Live Demo
-                  </button>
-                </div>
+                </AccentPanel>
               </div>
             </ScrollReveal>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Next Project CTA */}
-      <section className="py-32 px-6 border-t border-white/5 bg-zinc-900/20">
-        <div className="max-w-4xl mx-auto text-center">
-          <span className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4 block">Next Case Study</span>
-          <Link 
-            to={getProfileProjectPath(profileSlug, nextProject.id)}
-            onClick={withClickSound()}
-            className="text-4xl md:text-6xl font-bold text-white hover:text-emerald-400 transition-colors tracking-tighter"
-          >
-            {nextProject.title}
-          </Link>
-        </div>
-      </section>
-      <Footer portfolioData={portfolioData} />
-    </Layout>
+        <section className="border-t border-white/8 bg-zinc-950/78 px-6 py-20">
+          <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+            <div className="max-w-4xl">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-gray-500">Next Case Study</p>
+              <Link
+                to={getProfileProjectPath(profileSlug, nextProject.id)}
+                onClick={withClickSound()}
+                onMouseEnter={withHoverSound(`detail-next-${nextProject.id}`)}
+                onFocus={withHoverSound(`detail-next-${nextProject.id}`)}
+                className="mt-4 inline-block text-4xl font-bold tracking-[-0.04em] text-white transition-colors hover:text-white/80 md:text-6xl"
+              >
+                {nextProject.title}
+              </Link>
+              <p className="mt-4 text-base leading-relaxed text-gray-400">
+                Continue through the {theme.eyebrow.toLowerCase()} track without leaving the active profile path.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <a
+                href={portfolioData.personal.resume}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={withClickSound()}
+                onMouseEnter={withHoverSound(`detail-resume-${project.id}`)}
+                onFocus={withHoverSound(`detail-resume-${project.id}`)}
+                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white px-6 py-3 text-sm font-bold uppercase tracking-[0.22em] text-black transition-all hover:scale-[1.01] hover:bg-white/90"
+              >
+                <FileText size={16} className="mr-2" /> Resume
+              </a>
+              <Link
+                to={getProfileHashPath(profileSlug, "contact")}
+                onClick={withClickSound()}
+                onMouseEnter={withHoverSound(`detail-contact-${project.id}`)}
+                onFocus={withHoverSound(`detail-contact-${project.id}`)}
+                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold uppercase tracking-[0.22em] text-white transition-all hover:scale-[1.01] hover:bg-white/10"
+              >
+                Get In Touch <ArrowRight size={16} className="ml-2" />
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <Footer portfolioData={portfolioData} />
+      </Layout>
     </motion.div>
   );
 }

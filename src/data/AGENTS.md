@@ -8,6 +8,11 @@ Scope: everything in `src/data`.
 - Keep this file plain data. No JSX, hooks, rendering helpers, or cross-file imports.
 - Keep `project.id` values stable and URL-safe within each profile.
 - Keep each profile `projects` array order intentional because it controls homepage ordering and the next-project link on detail pages.
+- Keep the case-study support fields in sync for every project:
+  - `stakes`
+  - `ownership`
+  - `decisions`
+  - `impactMetrics`
 - `Project.type` must stay aligned with the supported UI values:
   - `AI`
   - `DE`

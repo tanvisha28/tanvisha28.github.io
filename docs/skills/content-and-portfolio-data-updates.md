@@ -17,15 +17,16 @@ Use this for profile copy changes, metrics, skills, experience, project case-stu
 
 - `project.id` changes break route URLs.
 - `projects` ordering is user-visible within each profile.
-- `Project.type` is not arbitrary; it drives styling and scene selection.
+- `Project.type` is not arbitrary; it still drives shared project semantics and homepage tone.
 - `flow` must remain a string using `" -> "` separators if you want the case-study flow UI to keep working.
+- The case-study route now expects `stakes`, `ownership`, `decisions`, and `impactMetrics` on each project entry.
 - `certifications` are currently unused, so editing them alone will not change the UI.
 
 ## Safe Workflow
 
 1. Make data-only changes first.
 2. Only touch components if the requested content requires a new rendered field.
-3. Keep strings concise enough for the existing layout.
+3. Keep strings concise enough for the existing layout, but do not leave the detail-page support fields sparse.
 4. If replacing links, verify every place the link is used, especially `resume`.
 5. Keep each profile resume URL aligned with the asset actually shipped in `public/`.
 
@@ -39,6 +40,6 @@ Use this for profile copy changes, metrics, skills, experience, project case-stu
 
 ## Repo-Specific Gotchas
 
-- The project detail page still uses placeholder buttons for source/demo actions because the data model does not yet provide URLs.
+- The detail page uses truthful `Resume` and `Get In Touch` CTAs instead of fake project-link buttons.
 - The homepage image fallback points to Unsplash if `public/profile.jpg` fails to load.
 - Resume actions across the app are expected to resolve through the active profile's `personal.resume` URL.

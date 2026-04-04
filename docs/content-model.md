@@ -71,7 +71,7 @@ Used by:
 
 - homepage project tree
 - project detail route lookup
-- project detail hero accents and 3D scene choice
+- project detail hero copy, support rail, workflow modules, and result cards
 - next-project CTA
 
 Required fields:
@@ -87,11 +87,15 @@ Required fields:
 - `techStack`
 - `problem`
 - `context`
+- `stakes`
+- `ownership`
 - `goals`
 - `architecture`
 - `implementation`
+- `decisions`
 - `flow`
 - `challenges`
+- `impactMetrics`
 - `outcomes`
 - `lessons`
 
@@ -99,16 +103,18 @@ Repo-specific rules:
 
 - `id` must stay stable and URL-safe within each profile because it becomes `/:profileSlug/project/:id`.
 - `type` must stay one of `AI`, `DE`, or `DS` unless the UI is extended.
-- `typeLabel` is the display-facing project category used in the UI. It can say `Software Engineering`, `Data Analytics`, and similar role framing without changing the visual scene type.
+- `typeLabel` is the display-facing project category used in the UI. It can say `Software Engineering`, `Data Analytics`, and similar role framing without changing the underlying project-type union.
 - `icon` is data-driven and controls the project card icon in `HomeSections.tsx`.
 - `flow` is split on `" -> "` in `ProjectDetail.tsx`. Keep that exact delimiter if you want the visual system flow pills to render correctly.
+- `stakes`, `ownership`, `decisions`, and `impactMetrics` are all visible on the case-study route. If you add them for one project, keep the structure consistent across the whole profile.
 - Each profile's `projects` array order drives:
   - the homepage project sequence
   - the next-project CTA on that profile's detail pages
 
-Known gap:
+Current behavior:
 
-- The current data model does not contain source-code URLs or live-demo URLs, so the detail page buttons are still placeholder actions.
+- The detail page uses truthful cross-site CTAs (`Resume`, `Get In Touch`, next-project navigation) instead of project-specific source/demo links.
+- There is still no project-level URL field in the data model for source code or live demos.
 
 ## `experience`
 

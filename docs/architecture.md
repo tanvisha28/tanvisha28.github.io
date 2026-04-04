@@ -27,7 +27,7 @@
 - `/:profileSlug/project/:id`
   - Reads `profileSlug` and `id` from the route.
   - Looks up the matching project only inside the active profile's `projects` array.
-  - Chooses one of three 3D scenes from `ProjectScenes.tsx`.
+  - Chooses one of four role-family detail scenes from `ProjectScenes.tsx` based on the active profile.
 - `/project/:id`
   - Redirects legacy project URLs to `/dataengineer/project/:id` when the project exists in the default profile.
 
@@ -72,14 +72,19 @@ The homepage is the most fragile part of the repo because it mixes three systems
 ## Project Detail Architecture
 
 - `ProjectDetail` is a conventional DOM page with a hero `Canvas` at the top and standard sections below it.
-- Accent color and project scene are selected from `project.type`.
+- The active project still comes from the current profile's `projects` array, but the detail-page hero scene and primary visual theme are now selected from the active `profileSlug`.
+- The detail-page body is a mixed DOM layout:
+  - narrative sections for problem, stakes, context, architecture, implementation, decisions, and results
+  - a supplemental support rail for goals, stack, and constraints
+  - responsive workflow cards that replace the old single-row flow strip
 - The next-project CTA is computed from the current index in the active profile's `projects` array.
 
 ### Consequences
 
 - Project order is user-visible, not just data order.
 - Adding a new project type is a cross-cutting change.
-- The current source/demo buttons are placeholders because the data model does not yet store URLs for them.
+- Adding a new profile slug is also a case-study visual change because the detail theme and hero scene are profile-family concepts now.
+- The page no longer shows placeholder source/demo buttons; truthful resume/contact CTAs are used instead unless project URLs are added to data later.
 
 ## Data Flow
 
@@ -112,7 +117,7 @@ The homepage is the most fragile part of the repo because it mixes three systems
 - [`src/components/3d/HomeLowerScene.tsx`](../src/components/3d/HomeLowerScene.tsx)
   - measured lower-scene visuals for projects, experience, and contact
 - [`src/components/3d/ProjectScenes.tsx`](../src/components/3d/ProjectScenes.tsx)
-  - AI / DE / DS detail scenes
+  - Data Engineer / Software Engineer / Data Scientist / Data Analyst detail scenes
 - [`src/audio`](../src/audio)
   - sound provider, controller, config, and interaction hooks
 
