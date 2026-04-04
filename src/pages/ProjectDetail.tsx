@@ -20,7 +20,7 @@ import {
   Workflow,
 } from "lucide-react";
 import { useEffect, type ComponentType, type ReactNode } from "react";
-import { Link, Navigate, useLocation, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { AmbientParticles, SceneLights } from "../components/3d/Common";
 import {
   DataAnalystScene,
@@ -32,6 +32,11 @@ import { Footer, Layout } from "../components/Layout";
 import { defaultProfileSlug, isProfileSlug, portfolioProfiles, type ProfileSlug } from "../data/portfolioData";
 import { useSoundInteractions } from "../audio/useSoundInteractions";
 import { getProfileHashPath, getProfileHomePath, getProfileProjectPath } from "../utils/profileRoutes";
+import {
+  createCaseStudyEntryState,
+  getCaseStudyEntryState,
+  markPendingHomeRestore,
+} from "../utils/homeScrollState";
 
 type DetailTheme = {
   accentHex: string;
@@ -158,6 +163,7 @@ function AccentPanel({
 export default function ProjectDetail() {
   const { id, profileSlug: profileSlugParam } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const hasValidProfileSlug = isProfileSlug(profileSlugParam);
   const profileSlug = hasValidProfileSlug ? profileSlugParam : defaultProfileSlug;
   const portfolioData = portfolioProfiles[profileSlug];
@@ -168,10 +174,41 @@ export default function ProjectDetail() {
   const Scene = theme.scene;
   const flowSteps = project ? project.flow.split(" -> ").map((step) => step.trim()).filter(Boolean) : [];
   const { withClickSound, withHoverSound } = useSoundInteractions();
+  const caseStudyEntryState = getCaseStudyEntryState(location.state);
+  const enteredFromHome = caseStudyEntryState?.profileSlug === profileSlug && caseStudyEntryState.previousRouteKind === "home";
+
+  const backToProjects = () => {
+    if (enteredFromHome) {
+      navigate(-1);
+      return;
+    }
+
+    navigate(getProfileHashPath(profileSlug, "projects"));
+  };
+
+  const nextProjectState =
+    nextProject &&
+    createCaseStudyEntryState({
+      profileSlug,
+      sourceProjectId: caseStudyEntryState?.sourceProjectId ?? project?.id ?? nextProject.id,
+      previousRouteKind: "detail",
+    });
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [profileSlug, id]);
+
+  useEffect(() => {
+    if (!project) return;
+    if (caseStudyEntryState?.profileSlug !== profileSlug) return;
+
+    markPendingHomeRestore({
+      profileSlug,
+      sourceProjectId: caseStudyEntryState.sourceProjectId,
+      reason: "case-study-entry",
+      requestedAt: Date.now(),
+    });
+  }, [caseStudyEntryState, profileSlug, project]);
 
   if (!hasValidProfileSlug) {
     return (
@@ -191,13 +228,7 @@ export default function ProjectDetail() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <Layout profileSlug={profileSlug} portfolioData={portfolioData}>
+    <Layout profileSlug={profileSlug} portfolioData={portfolioData}>
         <section className="relative overflow-hidden border-b border-white/8">
           <div className="absolute inset-0">
             <Canvas camera={{ position: [0, 0, 6.4], fov: 52 }}>
@@ -215,15 +246,15 @@ export default function ProjectDetail() {
           </div>
 
           <div className="relative z-10 mx-auto flex min-h-[88vh] max-w-7xl flex-col justify-end px-6 pb-14 pt-32 md:pb-16 xl:pb-18">
-            <Link
-              to={getProfileHashPath(profileSlug, "projects")}
-              onClick={withClickSound()}
+            <button
+              type="button"
+              onClick={withClickSound(backToProjects)}
               onMouseEnter={withHoverSound(`detail-back-${project.id}`)}
               onFocus={withHoverSound(`detail-back-${project.id}`)}
               className="mb-8 inline-flex items-center text-sm font-bold uppercase tracking-[0.24em] text-gray-400 transition-colors hover:text-white"
             >
               <ArrowLeft size={16} className="mr-2" /> Back to Projects
-            </Link>
+            </button>
 
             <div className="grid gap-8 xl:grid-cols-[minmax(0,1.08fr)_360px] xl:items-end">
               <div className="max-w-4xl">
@@ -503,6 +534,7 @@ export default function ProjectDetail() {
               <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-gray-500">Next Case Study</p>
               <Link
                 to={getProfileProjectPath(profileSlug, nextProject.id)}
+                state={nextProjectState}
                 onClick={withClickSound()}
                 onMouseEnter={withHoverSound(`detail-next-${nextProject.id}`)}
                 onFocus={withHoverSound(`detail-next-${nextProject.id}`)}
@@ -541,7 +573,6 @@ export default function ProjectDetail() {
         </section>
 
         <Footer portfolioData={portfolioData} />
-      </Layout>
-    </motion.div>
+    </Layout>
   );
 }

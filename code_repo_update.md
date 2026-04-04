@@ -39,6 +39,17 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 
 ### 2026-04-04
 
+- Added exact home-scroll restoration for case-study entry and exit across the profile-scoped routes:
+  - `src/utils/homeScrollState.ts` now owns the internal session-backed snapshot and restore-state contract used between `Home`, `ProjectDetail`, `Layout`, and `ScrollToTop`
+  - `src/pages/Home.tsx` now snapshots the active profile homepage scroll position before project-card navigation, restores the hidden `ScrollControls` viewport on valid returns, and skips hero resets during restoration
+  - `src/pages/ProjectDetail.tsx` now distinguishes true home-entry back behavior from direct-open fallback behavior, while the shared navbar logo plus `Home` / `Projects` exits preserve the last valid home snapshot
+- Moved primary route-change animation ownership into the app shell:
+  - `src/App.tsx` now wraps routed pages in a shared cinematic transition veil keyed by route kind (`home` vs `detail`)
+  - `src/pages/Home.tsx` and `src/pages/ProjectDetail.tsx` no longer own full-page fade wrappers, so local reveal motion stays local and route transitions stay coordinated
+- Updated debugging and architecture docs to reflect the new restore-aware navigation flow and the app-shell transition layer.
+
+### 2026-04-04
+
 - Rebuilt the profile-scoped case-study route as a richer, role-family detail experience:
   - `src/pages/ProjectDetail.tsx` now uses a premium multi-section layout with a hero metrics rail, support rail, responsive workflow cards, implementation/decision modules, and truthful cross-site CTAs instead of placeholder source/demo buttons
   - the old single-row system-flow strip was replaced with responsive cards so laptop-width layouts no longer collide with the support rail

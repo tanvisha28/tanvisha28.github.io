@@ -64,6 +64,19 @@ Check:
 4. [`src/index.css`](../src/index.css) does not apply `scroll-behavior: smooth` to every element, which can affect the hidden scroll container created by `ScrollControls`.
 5. The `<ScrollControls>` style in `Home.tsx` still forces `scrollBehavior: "auto"` on the hidden viewport.
 
+## Failure Mode: Returning From A Case Study Lands At The Top Of Home
+
+Likely cause: the restore handshake between `Home`, `ProjectDetail`, `Layout`, `ScrollToTop`, and `homeScrollState.ts` broke.
+
+Check:
+
+1. `src/pages/Home.tsx` still saves a `HomeScrollSnapshot` before navigating from a homepage project card into a case study.
+2. `src/utils/homeScrollState.ts` still reads and writes the per-profile snapshot and pending-restore keys from `sessionStorage`.
+3. `src/components/ScrollToTop.tsx` still skips the global top reset when a valid explicit home-restore state exists or when a `POP` navigation finds a pending restore for that profile.
+4. `src/pages/Home.tsx` still detects explicit restore state or pending `POP` restore state before running its normal hero-reset effects.
+5. `src/pages/ProjectDetail.tsx` still uses `navigate(-1)` only when the detail route was actually entered from the homepage, and falls back to `/:profileSlug#projects` for direct-open detail pages.
+6. `src/components/Layout.tsx` should only use snapshot-aware `Home` / `Projects` destinations on detail routes, not on the homepage itself.
+
 ## Failure Mode: Hero Background No Longer Centers On The Portrait
 
 Likely cause: the DOM-to-scene anchor path drifted.
@@ -93,7 +106,7 @@ Check:
 1. The target section `id` still exists in `Home.tsx`.
 2. Navbar links still point to the right hash.
 3. `ScrollViewportBridge` is still capturing the correct scroll viewport element in canvas mode.
-4. `ScrollToTop.tsx` only resets on pathname change, while the home page itself handles hash scrolling.
+4. `ScrollToTop.tsx` still performs the global top reset for normal route changes, but skips it for valid restoreable home returns. The home page itself still owns hash scrolling.
 5. The route still lands on the expected `/:profileSlug` homepage before the hash-based scroll runs.
 6. The active route should be `/:profileSlug#section`, not an unscoped hash like `/#projects`.
 

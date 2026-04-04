@@ -4,6 +4,7 @@
 
 - Entry point: [`src/main.tsx`](../src/main.tsx)
 - Router shell and global providers: [`src/App.tsx`](../src/App.tsx)
+- Home/detail scroll snapshot helpers: [`src/utils/homeScrollState.ts`](../src/utils/homeScrollState.ts)
 - Shared layout/nav/footer: [`src/components/Layout.tsx`](../src/components/Layout.tsx)
 - Shared sound toggle: [`src/components/SoundToggle.tsx`](../src/components/SoundToggle.tsx)
 - Homepage route: [`src/pages/Home.tsx`](../src/pages/Home.tsx)
@@ -50,12 +51,15 @@ The homepage is the most fragile part of the repo because it mixes three systems
 ### Rendering Layers
 
 - `App` wraps the router in `SoundProvider`, so sound state is available to both route-level pages and shared layout chrome.
+- `App` also owns the route-shell transition veil. Home/detail route changes animate through one fixed overlay rather than each page independently fading itself.
 - `Layout` renders the navbar, sound toggle, and route wrapper using the active profile's shared copy and links.
+- `Layout` is restore-aware on detail routes: the logo plus `Home` and `Projects` links can return to the last valid scroll snapshot on the active profile homepage.
 - `Home` gates canvas rendering through `canCreateWebGLContext` plus `CanvasErrorBoundary`.
 - `ScrollViewportBridge` captures Drei's scroll viewport so the page can drive hash navigation, measurement, and motion viewport roots from the same element.
 - `SceneLights` and `StoryScene` render the homepage 3D environment.
 - `StoryScene` combines `HeroScene` with `HomeLowerScene`.
 - `HomeScrollContent` renders the actual content sections inside `<Scroll html>` in canvas mode and directly in DOM fallback mode.
+- `Home` also owns the exact home-return contract. Before entering a case study it stores the active profile's current scroll position in session storage, and on a valid return it restores either the hidden canvas viewport or DOM fallback scroll position before normal hero-reset logic runs.
 - Top-level homepage sections are tracked with `data-home-scroll-section` markers. They are the source of truth for both `pages` measurement and section-range measurement.
 - The current homepage section stack for each `/:profileSlug` route is `hero -> about -> skills -> projects -> experience -> education -> contact -> footer`.
 - `homeSceneData.ts` owns the lower-scene geometry, responsive density tuning, and default measured section ranges used by `HomeLowerScene`.
@@ -73,6 +77,7 @@ The homepage is the most fragile part of the repo because it mixes three systems
 
 - `ProjectDetail` is a conventional DOM page with a hero `Canvas` at the top and standard sections below it.
 - The active project still comes from the current profile's `projects` array, but the detail-page hero scene and primary visual theme are now selected from the active `profileSlug`.
+- `ProjectDetail` reads the internal case-study entry state so the visible "Back to Projects" control only uses history-based exact restore when the current visit truly started from the homepage project list.
 - The detail-page body is a mixed DOM layout:
   - narrative sections for problem, stakes, context, architecture, implementation, decisions, and results
   - a supplemental support rail for goals, stack, and constraints
@@ -90,6 +95,7 @@ The homepage is the most fragile part of the repo because it mixes three systems
 
 - All display content comes from the `portfolioProfiles` map exported by `portfolioData.ts`.
 - `Home.tsx`, `Layout.tsx`, `HomeSections.tsx`, and `ProjectDetail.tsx` all resolve the active profile and read from that map.
+- Route-state and session-state helpers in `homeScrollState.ts` connect those pages for exact home-return behavior without changing public URLs.
 - Each active profile's `education` array is a visible homepage section, not just stored background data.
 - Shared nav, footer, resume links, and hash routes stay scoped to the active `profileSlug`.
 - `homeSceneData.ts` drives the lower homepage scene geometry and tuning separately from copy/content.

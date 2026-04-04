@@ -14,6 +14,7 @@ import { SoundToggle } from "./SoundToggle";
 import { useSoundInteractions } from "../audio/useSoundInteractions";
 import { getEmailComposeUrl } from "../utils/contact";
 import { getProfileHashPath, getProfileHomePath } from "../utils/profileRoutes";
+import { createHomeRestoreState, hasHomeScrollSnapshot, type PortfolioRouteState } from "../utils/homeScrollState";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -41,6 +42,7 @@ export function Navbar({
   const { withClickSound } = useSoundInteractions();
   const navLinks = useProfileNavLinks(profileSlug);
   const homePath = getProfileHomePath(profileSlug);
+  const canRestoreHomeScroll = location.pathname !== homePath && hasHomeScrollSnapshot(profileSlug);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -60,6 +62,29 @@ export function Navbar({
     return location.hash === hash;
   };
 
+  const homeRestoreState: PortfolioRouteState | undefined = canRestoreHomeScroll
+    ? createHomeRestoreState({ profileSlug, reason: "detail-home-nav" })
+    : undefined;
+  const projectsRestoreState: PortfolioRouteState | undefined = canRestoreHomeScroll
+    ? createHomeRestoreState({ profileSlug, reason: "detail-projects-nav" })
+    : undefined;
+
+  const getNavDestination = (link: { name: string; path: string; hash?: string }) => {
+    if (!canRestoreHomeScroll) {
+      return { to: link.path, state: undefined as PortfolioRouteState | undefined };
+    }
+
+    if (link.name === "Home") {
+      return { to: homePath, state: homeRestoreState };
+    }
+
+    if (link.name === "Projects") {
+      return { to: homePath, state: projectsRestoreState };
+    }
+
+    return { to: link.path, state: undefined as PortfolioRouteState | undefined };
+  };
+
   return (
     <nav
       className={cn(
@@ -70,6 +95,7 @@ export function Navbar({
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
         <Link
           to={homePath}
+          state={homeRestoreState}
           onClick={withClickSound()}
           className="text-xl font-bold tracking-tighter text-white"
         >
@@ -79,17 +105,24 @@ export function Navbar({
 
         <div className="hidden md:flex items-center space-x-6">
           {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              onClick={withClickSound()}
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-emerald-400",
-                isActiveLink(link.hash) ? "text-emerald-400" : "text-gray-400"
-              )}
-            >
-              {link.name}
-            </Link>
+            (() => {
+              const destination = getNavDestination(link);
+
+              return (
+                <Link
+                  key={link.name}
+                  to={destination.to}
+                  state={destination.state}
+                  onClick={withClickSound()}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-emerald-400",
+                    isActiveLink(link.hash) ? "text-emerald-400" : "text-gray-400"
+                  )}
+                >
+                  {link.name}
+                </Link>
+              );
+            })()
           ))}
           <SoundToggle />
           <a
@@ -120,14 +153,21 @@ export function Navbar({
             className="absolute top-full left-0 w-full bg-black border-b border-white/10 py-8 px-6 flex flex-col space-y-6 md:hidden"
           >
             {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.path}
-                className="text-lg font-medium text-gray-300"
-                onClick={withClickSound(() => setIsOpen(false))}
-              >
-                {link.name}
-              </Link>
+              (() => {
+                const destination = getNavDestination(link);
+
+                return (
+                  <Link
+                    key={link.name}
+                    to={destination.to}
+                    state={destination.state}
+                    className="text-lg font-medium text-gray-300"
+                    onClick={withClickSound(() => setIsOpen(false))}
+                  >
+                    {link.name}
+                  </Link>
+                );
+              })()
             ))}
             <a
               href={portfolioData.personal.resume}

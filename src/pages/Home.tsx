@@ -12,7 +12,7 @@ import { SceneLights } from "../components/3d/Common";
 import { StoryScene } from "../components/3d/StoryScene";
 import { Layout, Footer } from "../components/Layout";
 import { SkillsGrid, ExperienceTimeline, ProjectTree, EducationGrid } from "../components/HomeSections";
-import { useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
+import { useLocation, useNavigate, useNavigationType, useParams, Navigate } from "react-router-dom";
 import { Component, useEffect, useMemo, useState, useRef, type ErrorInfo, type ReactNode, type RefObject } from "react";
 import { motion, useIsPresent, useMotionValue } from "motion/react";
 import { majorHomeSections } from "../audio/soundConfig";
@@ -21,6 +21,16 @@ import { useSoundInteractions, type SoundInteractionHandlers } from "../audio/us
 import { getEmailComposeUrl } from "../utils/contact";
 import { withBasePath } from "../utils/publicAsset";
 import { getProfileHomePath, getProfileProjectPath } from "../utils/profileRoutes";
+import {
+  clearPendingHomeRestore,
+  createCaseStudyEntryState,
+  getHomeRestoreState,
+  markPendingHomeRestore,
+  readHomeScrollSnapshot,
+  readPendingHomeRestore,
+  saveHomeScrollSnapshot,
+  type HomeScrollMode,
+} from "../utils/homeScrollState";
 
 const HOME_SCROLL_SECTION_ORDER = ["hero", "about", "skills", "projects", "experience", "education", "contact", "footer"] as const;
 type HomeScrollSectionName = (typeof HOME_SCROLL_SECTION_ORDER)[number];
@@ -593,6 +603,7 @@ function ScrollViewportBridge({
 export default function Home() {
   const location = useLocation();
   const { hash, key: locationKey } = location;
+  const navigationType = useNavigationType();
   const { profileSlug: profileSlugParam } = useParams();
   const hasValidProfileSlug = isProfileSlug(profileSlugParam);
   const profileSlug = hasValidProfileSlug ? profileSlugParam : defaultProfileSlug;
@@ -612,6 +623,7 @@ export default function Home() {
   const previousHashRef = useRef(hash);
   const heroSectionRef = useRef<HTMLElement>(null);
   const heroPortraitRef = useRef<HTMLDivElement>(null);
+  const [homeRestoreStatus, setHomeRestoreStatus] = useState<"idle" | "pending" | "restored">("idle");
   const heroAnchorX = useMotionValue(0);
   const heroAnchorY = useMotionValue(0.18);
   const heroIntroProgress = useMotionValue(0);
@@ -622,6 +634,7 @@ export default function Home() {
     }),
     [heroAnchorX, heroAnchorY]
   );
+  const shouldPreserveHomeScroll = homeRestoreStatus !== "idle";
 
   const resetWindowScrollPosition = () => {
     document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -634,6 +647,39 @@ export default function Home() {
 
     scrollViewport.scrollLeft = 0;
     scrollViewport.scrollTop = 1;
+  };
+
+  const getCurrentHomeScrollSnapshot = (sourceProjectId: string) => {
+    const canvasScrollViewport = scrollViewportRef.current;
+    const mode: HomeScrollMode = isCanvasEnabled && canvasScrollViewport ? "canvas" : "dom";
+    const scrollTop =
+      mode === "canvas"
+        ? canvasScrollViewport.scrollTop
+        : document.scrollingElement?.scrollTop ?? window.scrollY ?? 0;
+
+    return {
+      profileSlug,
+      mode,
+      scrollTop,
+      sourceProjectId,
+      timestamp: Date.now(),
+    };
+  };
+
+  const applyWindowScrollRestore = (targetTop: number) => {
+    const normalizedTarget = Math.max(0, targetTop);
+    document.scrollingElement?.scrollTo({ top: normalizedTarget, left: 0, behavior: "auto" });
+    window.scrollTo({ top: normalizedTarget, left: 0, behavior: "auto" });
+  };
+
+  const applyCanvasScrollRestore = (targetTop: number) => {
+    const scrollViewport = scrollViewportRef.current;
+    if (!scrollViewport) return;
+
+    const maxScroll = Math.max(1, scrollViewport.scrollHeight - scrollViewport.clientHeight);
+    const clampedTarget = Math.max(1, Math.min(targetTop, maxScroll));
+    scrollViewport.scrollLeft = 0;
+    scrollViewport.scrollTo({ top: clampedTarget, behavior: "auto" });
   };
 
   const setScrollViewport = (element: HTMLDivElement) => {
@@ -660,6 +706,30 @@ export default function Home() {
       window.history.scrollRestoration = previousScrollRestoration;
     };
   }, []);
+
+  useEffect(() => {
+    enteredHomeWithHashRef.current = Boolean(hash);
+
+    if (hash) {
+      clearPendingHomeRestore(profileSlug);
+      setHomeRestoreStatus("idle");
+      return;
+    }
+
+    const explicitRestore = getHomeRestoreState(location.state);
+    if (explicitRestore?.profileSlug === profileSlug) {
+      setHomeRestoreStatus("pending");
+      return;
+    }
+
+    if (navigationType === "POP" && readPendingHomeRestore(profileSlug)) {
+      setHomeRestoreStatus("pending");
+      return;
+    }
+
+    clearPendingHomeRestore(profileSlug);
+    setHomeRestoreStatus("idle");
+  }, [hash, location.state, navigationType, profileSlug, locationKey]);
 
   const disableCanvas = () => {
     scrollViewportRef.current = null;
@@ -707,6 +777,61 @@ export default function Home() {
       window.removeEventListener("unhandledrejection", onUnhandledRejection);
     };
   }, []);
+
+  useEffect(() => {
+    if (homeRestoreStatus !== "pending") return;
+
+    const snapshot = readHomeScrollSnapshot(profileSlug);
+    if (!snapshot) {
+      clearPendingHomeRestore(profileSlug);
+      setHomeRestoreStatus("idle");
+      return;
+    }
+
+    if (isCanvasEnabled) {
+      const scrollViewport = scrollViewportRef.current;
+      if (!scrollViewport) return;
+      if (scrollViewport.scrollHeight <= scrollViewport.clientHeight + 1) return;
+
+      let frame = 0;
+      const timeouts: number[] = [];
+      const restore = () => applyCanvasScrollRestore(snapshot.scrollTop);
+
+      restore();
+      frame = window.requestAnimationFrame(() => {
+        restore();
+        timeouts.push(window.setTimeout(restore, 120));
+        timeouts.push(window.setTimeout(restore, 320));
+      });
+
+      clearPendingHomeRestore(profileSlug);
+      setHomeRestoreStatus("restored");
+
+      return () => {
+        window.cancelAnimationFrame(frame);
+        timeouts.forEach((timeout) => window.clearTimeout(timeout));
+      };
+    }
+
+    let frame = 0;
+    const timeouts: number[] = [];
+    const restore = () => applyWindowScrollRestore(snapshot.scrollTop);
+
+    restore();
+    frame = window.requestAnimationFrame(() => {
+      restore();
+      timeouts.push(window.setTimeout(restore, 120));
+      timeouts.push(window.setTimeout(restore, 320));
+    });
+
+    clearPendingHomeRestore(profileSlug);
+    setHomeRestoreStatus("restored");
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      timeouts.forEach((timeout) => window.clearTimeout(timeout));
+    };
+  }, [homeRestoreStatus, isCanvasEnabled, profileSlug, scrollViewportVersion, pages]);
 
   useEffect(() => {
     const element = containerRef.current;
@@ -840,8 +965,27 @@ export default function Home() {
   const sectionIntroClassName =
     "relative mx-auto overflow-hidden rounded-[2rem] border border-white/10 bg-black/[0.45] px-6 py-8 shadow-[0_0_60px_rgba(0,0,0,0.35)] backdrop-blur-xl md:px-10 md:py-10";
 
+  const openProjectDetail = (projectId: string) => {
+    const snapshot = getCurrentHomeScrollSnapshot(projectId);
+    saveHomeScrollSnapshot(snapshot);
+    markPendingHomeRestore({
+      profileSlug,
+      sourceProjectId: projectId,
+      reason: "case-study-entry",
+      requestedAt: Date.now(),
+    });
+
+    navigate(getProfileProjectPath(profileSlug, projectId), {
+      state: createCaseStudyEntryState({
+        profileSlug,
+        sourceProjectId: projectId,
+        previousRouteKind: "home",
+      }),
+    });
+  };
+
   useEffect(() => {
-    if (isCanvasEnabled || hash) return;
+    if (isCanvasEnabled || hash || shouldPreserveHomeScroll) return;
 
     let frame = 0;
     const timeouts: number[] = [];
@@ -856,10 +1000,10 @@ export default function Home() {
       window.cancelAnimationFrame(frame);
       timeouts.forEach((timeout) => window.clearTimeout(timeout));
     };
-  }, [hash, isCanvasEnabled, locationKey]);
+  }, [hash, isCanvasEnabled, locationKey, shouldPreserveHomeScroll]);
 
   useEffect(() => {
-    if (!isCanvasEnabled || hash) return;
+    if (!isCanvasEnabled || hash || shouldPreserveHomeScroll) return;
     if (enteredHomeWithHashRef.current) return;
     if (hasInitializedCanvasViewportRef.current) return;
     if (pages <= 1.01) return;
@@ -882,7 +1026,7 @@ export default function Home() {
       window.cancelAnimationFrame(frame);
       timeouts.forEach((timeout) => window.clearTimeout(timeout));
     };
-  }, [hash, isCanvasEnabled, pages, scrollViewportVersion]);
+  }, [hash, isCanvasEnabled, pages, scrollViewportVersion, shouldPreserveHomeScroll]);
 
   useEffect(() => {
     const sectionId = hash.replace("#", "");
@@ -904,7 +1048,7 @@ export default function Home() {
     const previousHash = previousHashRef.current;
     previousHashRef.current = hash;
 
-    if (!isCanvasEnabled || hash || !previousHash) return;
+    if (!isCanvasEnabled || hash || !previousHash || shouldPreserveHomeScroll) return;
     if (!scrollViewportRef.current) return;
 
     let frame = 0;
@@ -915,7 +1059,7 @@ export default function Home() {
     return () => {
       window.cancelAnimationFrame(frame);
     };
-  }, [hash, isCanvasEnabled, scrollViewportVersion]);
+  }, [hash, isCanvasEnabled, scrollViewportVersion, shouldPreserveHomeScroll]);
 
   useEffect(() => {
     const scrollViewport = scrollViewportRef.current;
@@ -1032,59 +1176,52 @@ export default function Home() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <Layout profileSlug={profileSlug} portfolioData={portfolioData}>
-        {isCanvasEnabled ? (
-          <CanvasErrorBoundary onError={handleCanvasError}>
-            <div className="fixed inset-0 z-0 bg-black">
-              <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 5], fov: 75 }} style={{ position: "absolute", inset: 0, zIndex: 0 }}>
-                <SceneLights />
-                {isPresent && (
-                  <ScrollControls pages={pages} damping={0.28} style={{ zIndex: "1", scrollBehavior: "auto" }}>
-                    <ScrollViewportBridge onReady={setScrollViewport} />
-                    <StoryScene heroAnchor={heroAnchor} heroIntroProgress={heroIntroProgress} sectionRanges={sectionRanges} />
-                    <Scroll html style={{ width: "100%", position: "absolute", inset: 0, zIndex: 1 }}>
-                      <HomeScrollContent
-                        canvasMode
-                        portfolioData={portfolioData}
-                        containerRef={containerRef}
-                        heroSectionRef={heroSectionRef}
-                        heroPortraitRef={heroPortraitRef}
-                        onProjectSelect={(projectId) => navigate(getProfileProjectPath(profileSlug, projectId))}
-                        onScrollToSection={scrollToSection}
-                        sectionIntroClassName={sectionIntroClassName}
-                        motionViewportRoot={scrollViewportRef}
-                        withClickSound={withClickSound}
-                        withHoverSound={withHoverSound}
-                      />
-                    </Scroll>
-                  </ScrollControls>
-                )}
-              </Canvas>
-            </div>
-          </CanvasErrorBoundary>
-        ) : (
-          <div className="relative z-0 bg-black">
-            <HomeScrollContent
-              canvasMode={false}
-              portfolioData={portfolioData}
-              containerRef={containerRef}
-              heroSectionRef={heroSectionRef}
-              heroPortraitRef={heroPortraitRef}
-              onProjectSelect={(projectId) => navigate(getProfileProjectPath(profileSlug, projectId))}
-              onScrollToSection={scrollToSection}
-              sectionIntroClassName={sectionIntroClassName}
-              withClickSound={withClickSound}
-              withHoverSound={withHoverSound}
-            />
+    <Layout profileSlug={profileSlug} portfolioData={portfolioData}>
+      {isCanvasEnabled ? (
+        <CanvasErrorBoundary onError={handleCanvasError}>
+          <div className="fixed inset-0 z-0 bg-black">
+            <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 5], fov: 75 }} style={{ position: "absolute", inset: 0, zIndex: 0 }}>
+              <SceneLights />
+              {isPresent && (
+                <ScrollControls pages={pages} damping={0.28} style={{ zIndex: "1", scrollBehavior: "auto" }}>
+                  <ScrollViewportBridge onReady={setScrollViewport} />
+                  <StoryScene heroAnchor={heroAnchor} heroIntroProgress={heroIntroProgress} sectionRanges={sectionRanges} />
+                  <Scroll html style={{ width: "100%", position: "absolute", inset: 0, zIndex: 1 }}>
+                    <HomeScrollContent
+                      canvasMode
+                      portfolioData={portfolioData}
+                      containerRef={containerRef}
+                      heroSectionRef={heroSectionRef}
+                      heroPortraitRef={heroPortraitRef}
+                      onProjectSelect={openProjectDetail}
+                      onScrollToSection={scrollToSection}
+                      sectionIntroClassName={sectionIntroClassName}
+                      motionViewportRoot={scrollViewportRef}
+                      withClickSound={withClickSound}
+                      withHoverSound={withHoverSound}
+                    />
+                  </Scroll>
+                </ScrollControls>
+              )}
+            </Canvas>
           </div>
-        )}
-      </Layout>
-    </motion.div>
+        </CanvasErrorBoundary>
+      ) : (
+        <div className="relative z-0 bg-black">
+          <HomeScrollContent
+            canvasMode={false}
+            portfolioData={portfolioData}
+            containerRef={containerRef}
+            heroSectionRef={heroSectionRef}
+            heroPortraitRef={heroPortraitRef}
+            onProjectSelect={openProjectDetail}
+            onScrollToSection={scrollToSection}
+            sectionIntroClassName={sectionIntroClassName}
+            withClickSound={withClickSound}
+            withHoverSound={withHoverSound}
+          />
+        </div>
+      )}
+    </Layout>
   );
 }
