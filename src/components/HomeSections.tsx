@@ -50,6 +50,10 @@ function getProjectTone(project: Project) {
       line: "bg-blue-400/40",
       glow: "shadow-[0_0_40px_rgba(59,130,246,0.08)]",
       markerIcon: "text-blue-400",
+      restoreBorder: "border-blue-300/35",
+      restoreGlow: "shadow-[0_0_65px_rgba(96,165,250,0.18)]",
+      restoreWash: "bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.18),transparent_60%)]",
+      restoreBeam: "bg-gradient-to-r from-transparent via-blue-300/40 to-transparent",
     };
   }
 
@@ -60,6 +64,10 @@ function getProjectTone(project: Project) {
       line: "bg-amber-400/40",
       glow: "shadow-[0_0_40px_rgba(245,158,11,0.08)]",
       markerIcon: "text-amber-400",
+      restoreBorder: "border-amber-300/35",
+      restoreGlow: "shadow-[0_0_65px_rgba(251,191,36,0.18)]",
+      restoreWash: "bg-[radial-gradient(circle_at_top,rgba(251,191,36,0.18),transparent_60%)]",
+      restoreBeam: "bg-gradient-to-r from-transparent via-amber-200/45 to-transparent",
     };
   }
 
@@ -69,6 +77,10 @@ function getProjectTone(project: Project) {
     line: "bg-purple-400/40",
     glow: "shadow-[0_0_40px_rgba(168,85,247,0.08)]",
     markerIcon: "text-purple-400",
+    restoreBorder: "border-violet-300/35",
+    restoreGlow: "shadow-[0_0_65px_rgba(196,181,253,0.18)]",
+    restoreWash: "bg-[radial-gradient(circle_at_top,rgba(196,181,253,0.18),transparent_60%)]",
+    restoreBeam: "bg-gradient-to-r from-transparent via-violet-200/45 to-transparent",
   };
 }
 
@@ -188,6 +200,7 @@ export function SkillsGrid({
 export function ProjectTree({
   projects,
   onProjectSelect,
+  restoredProjectId,
   revealSoundId,
   viewportRoot,
   withClickSound,
@@ -195,6 +208,7 @@ export function ProjectTree({
 }: {
   projects: Project[];
   onProjectSelect: (projectId: string) => void;
+  restoredProjectId?: string | null;
   revealSoundId?: string;
   viewportRoot?: RefObject<Element | null>;
   withClickSound: SoundInteractionHandlers["withClickSound"];
@@ -213,6 +227,7 @@ export function ProjectTree({
           const tone = getProjectTone(project);
           const Icon = tone.icon;
           const isLeft = idx % 2 === 0;
+          const isRestoredProject = restoredProjectId === project.id;
 
           return (
             <motion.div
@@ -230,22 +245,62 @@ export function ProjectTree({
                 )}
               >
                 <motion.article 
-                  whileHover={{ y: -5, scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  className={cn("pointer-events-auto relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 p-7 backdrop-blur-xl transition-colors hover:border-white/20 hover:bg-black/80 md:p-8", tone.glow)}
+                  initial={false}
+                  animate={isRestoredProject ? { y: [0, -10, 0], scale: [1, 1.014, 1] } : { y: 0, scale: 1 }}
+                  transition={
+                    isRestoredProject
+                      ? { duration: 1.35, times: [0, 0.38, 1], ease: [0.22, 1, 0.36, 1] }
+                      : { duration: 0.2 }
+                  }
+                  whileHover={{
+                    y: -5,
+                    scale: 1.02,
+                    transition: { type: "spring", stiffness: 400, damping: 30 },
+                  }}
+                  className={cn(
+                    "group pointer-events-auto relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 p-7 backdrop-blur-xl transition-[border-color,background-color,box-shadow] duration-500 hover:border-white/20 hover:bg-black/80 md:p-8",
+                    tone.glow,
+                    isRestoredProject && [tone.restoreBorder, tone.restoreGlow]
+                  )}
+                  data-restored-project={isRestoredProject ? "true" : undefined}
                 >
-                  <div aria-hidden className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent opacity-50 transition-opacity group-hover:opacity-100" />
+                  <div
+                    aria-hidden
+                    className={cn("pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700", tone.restoreWash, isRestoredProject && "opacity-100")}
+                  />
+                  <motion.div
+                    aria-hidden
+                    className={cn("pointer-events-none absolute inset-y-0 -left-[22%] w-[44%] skew-x-[-22deg] blur-2xl", tone.restoreBeam)}
+                    initial={false}
+                    animate={
+                      isRestoredProject
+                        ? { x: ["0%", "220%"], opacity: [0, 0.78, 0] }
+                        : { x: "0%", opacity: 0 }
+                    }
+                    transition={
+                      isRestoredProject
+                        ? { duration: 1.2, times: [0, 0.22, 1], ease: [0.22, 1, 0.36, 1] }
+                        : { duration: 0.2 }
+                    }
+                  />
+                  <div
+                    aria-hidden
+                    className={cn(
+                      "pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent transition-opacity",
+                      isRestoredProject ? "opacity-100" : "opacity-50 group-hover:opacity-100"
+                    )}
+                  />
 
-                  <span className={cn("mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-widest", tone.badge)}>
+                  <span className={cn("relative mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-widest", tone.badge)}>
                     <Icon size={14} />
                     {project.typeLabel}
                   </span>
 
-                  <h3 className="mb-3 text-3xl font-bold text-white md:text-4xl">{project.title}</h3>
-                  <p className="mb-6 text-sm font-medium uppercase tracking-[0.24em] text-gray-500">{project.domain}</p>
-                  <p className="mb-8 leading-relaxed text-gray-400">{project.summary}</p>
+                  <h3 className="relative mb-3 text-3xl font-bold text-white md:text-4xl">{project.title}</h3>
+                  <p className="relative mb-6 text-sm font-medium uppercase tracking-[0.24em] text-gray-500">{project.domain}</p>
+                  <p className="relative mb-8 leading-relaxed text-gray-400">{project.summary}</p>
 
-                  <div className="mb-7 flex flex-wrap gap-2">
+                  <div className="relative mb-7 flex flex-wrap gap-2">
                     {project.techStack.slice(0, 4).map((tech) => (
                       <span key={tech} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-400">
                         {tech}
@@ -253,7 +308,7 @@ export function ProjectTree({
                     ))}
                   </div>
 
-                  <div className="mb-7 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+                  <div className="relative mb-7 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
                     <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.28em] text-gray-500">Outcome</p>
                     <p className="text-sm leading-relaxed text-gray-300">{project.outcomes[0]}</p>
                   </div>
@@ -263,7 +318,7 @@ export function ProjectTree({
                     onClick={withClickSound(() => onProjectSelect(project.id))}
                     onMouseEnter={withHoverSound(`project-cta-${project.id}`)}
                     onFocus={withHoverSound(`project-cta-${project.id}`)}
-                    className="inline-flex items-center rounded-full bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest text-black transition-all hover:bg-emerald-500 hover:text-white hover:scale-105 active:scale-95"
+                    className="relative inline-flex items-center rounded-full bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest text-black transition-all hover:bg-emerald-500 hover:text-white hover:scale-105 active:scale-95"
                   >
                     View Case Study <ArrowRight size={16} className="ml-2" />
                   </button>

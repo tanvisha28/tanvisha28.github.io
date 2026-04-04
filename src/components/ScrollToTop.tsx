@@ -4,22 +4,22 @@
  */
 
 import { useEffect } from "react";
-import { useLocation, useNavigationType } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { clearPendingHomeRestore, getHomeRestoreState, getProfileSlugFromHomePath, readPendingHomeRestore } from "../utils/homeScrollState";
 
 export default function ScrollToTop() {
   const { pathname, hash, state } = useLocation();
-  const navigationType = useNavigationType();
 
   useEffect(() => {
     const homeProfileSlug = getProfileSlugFromHomePath(pathname);
     if (homeProfileSlug && !hash) {
       const explicitRestore = getHomeRestoreState(state);
+      const pendingRestore = readPendingHomeRestore(homeProfileSlug);
       if (explicitRestore?.profileSlug === homeProfileSlug) {
         return;
       }
 
-      if (navigationType === "POP" && readPendingHomeRestore(homeProfileSlug)) {
+      if (pendingRestore?.profileSlug === homeProfileSlug) {
         return;
       }
 
@@ -27,7 +27,7 @@ export default function ScrollToTop() {
     }
 
     window.scrollTo(0, 0);
-  }, [hash, navigationType, pathname, state]);
+  }, [hash, pathname, state]);
 
   return null;
 }

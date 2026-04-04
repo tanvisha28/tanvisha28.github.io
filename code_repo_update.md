@@ -39,6 +39,13 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 
 ### 2026-04-04
 
+- Tightened case-study return behavior so home restoration waits for the real saved offset instead of restoring as soon as the homepage becomes merely scrollable:
+  - `src/pages/Home.tsx` now keeps restore state pending until the canvas or DOM scroll container can actually reach the saved snapshot, then applies the restore and triggers a transient resume highlight for the originating project card
+  - `src/components/ScrollToTop.tsx` now defers all top resets whenever a valid home restore is pending, leaving restore completion to `Home`
+  - `src/components/HomeSections.tsx` now accepts an optional `restoredProjectId` so the project rail can briefly re-emphasize the resumed case-study card without changing layout density
+
+### 2026-04-04
+
 - Added exact home-scroll restoration for case-study entry and exit across the profile-scoped routes:
   - `src/utils/homeScrollState.ts` now owns the internal session-backed snapshot and restore-state contract used between `Home`, `ProjectDetail`, `Layout`, and `ScrollToTop`
   - `src/pages/Home.tsx` now snapshots the active profile homepage scroll position before project-card navigation, restores the hidden `ScrollControls` viewport on valid returns, and skips hero resets during restoration

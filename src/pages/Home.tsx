@@ -178,6 +178,7 @@ function HomeScrollContent({
   heroPortraitRef,
   onProjectSelect,
   onScrollToSection,
+  restoredProjectId,
   sectionIntroClassName,
   motionViewportRoot,
   withClickSound,
@@ -190,6 +191,7 @@ function HomeScrollContent({
   heroPortraitRef: RefObject<HTMLDivElement | null>;
   onProjectSelect: (projectId: string) => void;
   onScrollToSection: (sectionId: string) => void;
+  restoredProjectId?: string | null;
   sectionIntroClassName: string;
   motionViewportRoot?: RefObject<Element | null>;
   withClickSound: SoundInteractionHandlers["withClickSound"];
@@ -400,6 +402,7 @@ function HomeScrollContent({
           <ProjectTree
             projects={portfolioData.projects}
             onProjectSelect={onProjectSelect}
+            restoredProjectId={restoredProjectId}
             revealSoundId="projects-tree"
             viewportRoot={motionViewportRoot}
             withClickSound={withClickSound}
@@ -624,6 +627,7 @@ export default function Home() {
   const heroSectionRef = useRef<HTMLElement>(null);
   const heroPortraitRef = useRef<HTMLDivElement>(null);
   const [homeRestoreStatus, setHomeRestoreStatus] = useState<"idle" | "pending" | "restored">("idle");
+  const [restoredProjectId, setRestoredProjectId] = useState<string | null>(null);
   const heroAnchorX = useMotionValue(0);
   const heroAnchorY = useMotionValue(0.18);
   const heroIntroProgress = useMotionValue(0);
@@ -682,6 +686,24 @@ export default function Home() {
     scrollViewport.scrollTo({ top: clampedTarget, behavior: "auto" });
   };
 
+  const canReachWindowRestoreTarget = (targetTop: number) => {
+    const normalizedTarget = Math.max(0, targetTop);
+    const scrollingElement = document.scrollingElement;
+    const scrollHeight = scrollingElement?.scrollHeight ?? document.documentElement.scrollHeight ?? 0;
+    const clientHeight = scrollingElement?.clientHeight ?? window.innerHeight ?? document.documentElement.clientHeight ?? 0;
+    const maxScroll = Math.max(0, scrollHeight - clientHeight);
+    return maxScroll + 1 >= normalizedTarget;
+  };
+
+  const canReachCanvasRestoreTarget = (targetTop: number) => {
+    const scrollViewport = scrollViewportRef.current;
+    if (!scrollViewport) return false;
+
+    const normalizedTarget = Math.max(1, targetTop);
+    const maxScroll = Math.max(1, scrollViewport.scrollHeight - scrollViewport.clientHeight);
+    return maxScroll + 1 >= normalizedTarget;
+  };
+
   const setScrollViewport = (element: HTMLDivElement) => {
     if (scrollViewportRef.current !== element) {
       scrollViewportRef.current = element;
@@ -712,22 +734,26 @@ export default function Home() {
 
     if (hash) {
       clearPendingHomeRestore(profileSlug);
+      setRestoredProjectId(null);
       setHomeRestoreStatus("idle");
       return;
     }
 
     const explicitRestore = getHomeRestoreState(location.state);
     if (explicitRestore?.profileSlug === profileSlug) {
+      setRestoredProjectId(null);
       setHomeRestoreStatus("pending");
       return;
     }
 
     if (navigationType === "POP" && readPendingHomeRestore(profileSlug)) {
+      setRestoredProjectId(null);
       setHomeRestoreStatus("pending");
       return;
     }
 
     clearPendingHomeRestore(profileSlug);
+    setRestoredProjectId(null);
     setHomeRestoreStatus("idle");
   }, [hash, location.state, navigationType, profileSlug, locationKey]);
 
@@ -784,14 +810,13 @@ export default function Home() {
     const snapshot = readHomeScrollSnapshot(profileSlug);
     if (!snapshot) {
       clearPendingHomeRestore(profileSlug);
+      setRestoredProjectId(null);
       setHomeRestoreStatus("idle");
       return;
     }
 
     if (isCanvasEnabled) {
-      const scrollViewport = scrollViewportRef.current;
-      if (!scrollViewport) return;
-      if (scrollViewport.scrollHeight <= scrollViewport.clientHeight + 1) return;
+      if (!canReachCanvasRestoreTarget(snapshot.scrollTop)) return;
 
       let frame = 0;
       const timeouts: number[] = [];
@@ -804,6 +829,7 @@ export default function Home() {
         timeouts.push(window.setTimeout(restore, 320));
       });
 
+      setRestoredProjectId(snapshot.sourceProjectId);
       clearPendingHomeRestore(profileSlug);
       setHomeRestoreStatus("restored");
 
@@ -812,6 +838,8 @@ export default function Home() {
         timeouts.forEach((timeout) => window.clearTimeout(timeout));
       };
     }
+
+    if (!canReachWindowRestoreTarget(snapshot.scrollTop)) return;
 
     let frame = 0;
     const timeouts: number[] = [];
@@ -824,6 +852,7 @@ export default function Home() {
       timeouts.push(window.setTimeout(restore, 320));
     });
 
+    setRestoredProjectId(snapshot.sourceProjectId);
     clearPendingHomeRestore(profileSlug);
     setHomeRestoreStatus("restored");
 
@@ -832,6 +861,16 @@ export default function Home() {
       timeouts.forEach((timeout) => window.clearTimeout(timeout));
     };
   }, [homeRestoreStatus, isCanvasEnabled, profileSlug, scrollViewportVersion, pages]);
+
+  useEffect(() => {
+    if (homeRestoreStatus !== "restored" || !restoredProjectId) return;
+
+    const timeout = window.setTimeout(() => {
+      setRestoredProjectId((current) => (current === restoredProjectId ? null : current));
+    }, 2200);
+
+    return () => window.clearTimeout(timeout);
+  }, [homeRestoreStatus, restoredProjectId]);
 
   useEffect(() => {
     const element = containerRef.current;
@@ -1195,6 +1234,7 @@ export default function Home() {
                       heroPortraitRef={heroPortraitRef}
                       onProjectSelect={openProjectDetail}
                       onScrollToSection={scrollToSection}
+                      restoredProjectId={restoredProjectId}
                       sectionIntroClassName={sectionIntroClassName}
                       motionViewportRoot={scrollViewportRef}
                       withClickSound={withClickSound}
@@ -1216,6 +1256,7 @@ export default function Home() {
             heroPortraitRef={heroPortraitRef}
             onProjectSelect={openProjectDetail}
             onScrollToSection={scrollToSection}
+            restoredProjectId={restoredProjectId}
             sectionIntroClassName={sectionIntroClassName}
             withClickSound={withClickSound}
             withHoverSound={withHoverSound}
