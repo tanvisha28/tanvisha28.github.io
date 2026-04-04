@@ -5,7 +5,7 @@ import {defineConfig, loadEnv} from 'vite';
 
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
-  const productionBase = '/tanvisha/';
+  const productionBase = '/';
   return {
     plugins: [react(), tailwindcss()],
     base: mode === 'production' ? productionBase : '/',

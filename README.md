@@ -20,18 +20,18 @@ Useful commands:
 
 ## GitHub Pages Deployment
 
-This repo is configured for GitHub Pages project-site hosting at:
+This repo is configured for GitHub Pages user-site hosting at:
 
-- `https://makkinaganesh25.github.io/tanvisha/`
+- `https://tanvisha28.github.io/`
 
-Production builds use a Vite base path of `/tanvisha/`, and the app router uses the same base at runtime. Public assets such as the profile image, resume, and optional audio files are resolved through that base path so they continue to work from the project-site URL.
+Production builds use the root Vite base path `/`, and the app router uses the same runtime base. Public assets such as the profile image, resume, and optional audio files resolve through that base path so they continue to work from the user-site URL.
 
 For GitHub Pages builds, use:
 
 1. `npm run lint`
 2. `npm run build:pages`
 
-`build:pages` also creates `dist/404.html` for SPA route refreshes on project detail pages and `dist/.nojekyll` for static hosting compatibility.
+`build:pages` also creates `dist/404.html` for SPA route refreshes on project detail pages and `dist/.nojekyll` for static hosting compatibility. The repo publishes through GitHub Actions from `main` using `.github/workflows/deploy.yml`.
 
 ## Current Stack
 

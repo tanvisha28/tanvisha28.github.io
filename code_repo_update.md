@@ -37,6 +37,25 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 
 ## Recent Updates
 
+### 2026-04-04
+
+- Migrated GitHub Pages deployment from the old project-site URL to the root user-site URL `https://tanvisha28.github.io/`:
+  - Vite production base path is now `/`
+  - the router and shared public-asset helpers continue to resolve from `import.meta.env.BASE_URL`
+  - `.github/workflows/deploy.yml` publishes `dist` to GitHub Pages from `main`
+  - `npm run build:pages` remains the release build entrypoint and still generates `404.html` and `.nojekyll`
+- Updated contributor-facing deployment docs in `README.md` to reflect the new Pages contract for `tanvisha28.github.io`.
+
+### 2026-04-04
+
+- Stabilized homepage scroll initialization in canvas mode:
+  - the inner Drei `ScrollControls` viewport now initializes once per no-hash home entry instead of relying on duplicate reset paths
+  - the homepage resets the hidden scroll viewport to Drei's expected top offset (`scrollTop = 1`) rather than `0`
+  - clearing a home hash back to `/` resets the canvas viewport to the hero without affecting direct hash entry
+- Narrowed global smooth-scroll CSS so it no longer applies to every element:
+  - the hidden `ScrollControls` viewport is now explicitly `scrollBehavior: auto`
+  - global smooth scrolling is limited to the document root, while intentional section jumps still use explicit smooth scrolling
+
 ### 2026-03-29
 
 - Added a durable repo-maintenance rule that contributor-facing changes must also update this file and the linked repo docs.

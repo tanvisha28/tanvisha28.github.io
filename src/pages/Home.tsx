@@ -599,12 +599,14 @@ export default function Home() {
   const { markSectionEntered, playCue, setHomeSoundscapeActive } = useSound();
   const { withClickSound, withHoverSound } = useSoundInteractions();
   const [isCanvasEnabled, setIsCanvasEnabled] = useState(() => canCreateWebGLContext());
-  const [pages, setPages] = useState(9);
+  const [pages, setPages] = useState(1);
   const [sectionRanges, setSectionRanges] = useState<HomeSceneRanges>(defaultHomeSceneRanges);
   const [scrollViewportVersion, setScrollViewportVersion] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollViewportRef = useRef<HTMLDivElement | null>(null);
-  const allowInitialScrollResetRef = useRef(true);
+  const hasInitializedCanvasViewportRef = useRef(false);
+  const enteredHomeWithHashRef = useRef(Boolean(hash));
+  const previousHashRef = useRef(hash);
   const heroSectionRef = useRef<HTMLElement>(null);
   const heroPortraitRef = useRef<HTMLDivElement>(null);
   const heroAnchorX = useMotionValue(0);
@@ -618,27 +620,22 @@ export default function Home() {
     [heroAnchorX, heroAnchorY]
   );
 
-  const resetHomeScrollPosition = () => {
-    const scrollViewport = scrollViewportRef.current;
-    if (scrollViewport) {
-      scrollViewport.scrollTop = 0;
-      scrollViewport.scrollLeft = 0;
-      scrollViewport.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }
-
+  const resetWindowScrollPosition = () => {
     document.scrollingElement?.scrollTo({ top: 0, left: 0, behavior: "auto" });
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  };
+
+  const resetCanvasScrollViewport = () => {
+    const scrollViewport = scrollViewportRef.current;
+    if (!scrollViewport) return;
+
+    scrollViewport.scrollLeft = 0;
+    scrollViewport.scrollTop = 1;
   };
 
   const setScrollViewport = (element: HTMLDivElement) => {
     if (scrollViewportRef.current !== element) {
       scrollViewportRef.current = element;
-      if (!hash && allowInitialScrollResetRef.current) {
-        resetHomeScrollPosition();
-        window.requestAnimationFrame(resetHomeScrollPosition);
-        window.setTimeout(resetHomeScrollPosition, 120);
-        window.setTimeout(resetHomeScrollPosition, 360);
-      }
       setScrollViewportVersion((value) => value + 1);
     }
   };
@@ -841,29 +838,48 @@ export default function Home() {
     "relative mx-auto overflow-hidden rounded-[2rem] border border-white/10 bg-black/[0.45] px-6 py-8 shadow-[0_0_60px_rgba(0,0,0,0.35)] backdrop-blur-xl md:px-10 md:py-10";
 
   useEffect(() => {
-    allowInitialScrollResetRef.current = !hash;
-    if (hash) return;
+    if (isCanvasEnabled || hash) return;
 
     let frame = 0;
     const timeouts: number[] = [];
 
     frame = window.requestAnimationFrame(() => {
-      resetHomeScrollPosition();
-      timeouts.push(window.setTimeout(resetHomeScrollPosition, 120));
-      timeouts.push(window.setTimeout(resetHomeScrollPosition, 360));
-      timeouts.push(
-        window.setTimeout(() => {
-          resetHomeScrollPosition();
-          allowInitialScrollResetRef.current = false;
-        }, 900)
-      );
+      resetWindowScrollPosition();
+      timeouts.push(window.setTimeout(resetWindowScrollPosition, 120));
+      timeouts.push(window.setTimeout(resetWindowScrollPosition, 360));
     });
 
     return () => {
       window.cancelAnimationFrame(frame);
       timeouts.forEach((timeout) => window.clearTimeout(timeout));
     };
-  }, [hash, isCanvasEnabled, locationKey, scrollViewportVersion]);
+  }, [hash, isCanvasEnabled, locationKey]);
+
+  useEffect(() => {
+    if (!isCanvasEnabled || hash) return;
+    if (enteredHomeWithHashRef.current) return;
+    if (hasInitializedCanvasViewportRef.current) return;
+    if (pages <= 1.01) return;
+    if (!scrollViewportRef.current) return;
+
+    hasInitializedCanvasViewportRef.current = true;
+
+    let frame = 0;
+    const timeouts: number[] = [];
+    const syncViewportToHero = () => resetCanvasScrollViewport();
+
+    syncViewportToHero();
+    frame = window.requestAnimationFrame(() => {
+      syncViewportToHero();
+      timeouts.push(window.setTimeout(syncViewportToHero, 120));
+      timeouts.push(window.setTimeout(syncViewportToHero, 320));
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      timeouts.forEach((timeout) => window.clearTimeout(timeout));
+    };
+  }, [hash, isCanvasEnabled, pages, scrollViewportVersion]);
 
   useEffect(() => {
     const sectionId = hash.replace("#", "");
@@ -880,6 +896,23 @@ export default function Home() {
       window.cancelAnimationFrame(frame);
     };
   }, [hash, scrollViewportVersion, isCanvasEnabled]);
+
+  useEffect(() => {
+    const previousHash = previousHashRef.current;
+    previousHashRef.current = hash;
+
+    if (!isCanvasEnabled || hash || !previousHash) return;
+    if (!scrollViewportRef.current) return;
+
+    let frame = 0;
+    frame = window.requestAnimationFrame(() => {
+      resetCanvasScrollViewport();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [hash, isCanvasEnabled, scrollViewportVersion]);
 
   useEffect(() => {
     const scrollViewport = scrollViewportRef.current;
@@ -996,7 +1029,7 @@ export default function Home() {
               <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 5], fov: 75 }} style={{ position: "absolute", inset: 0, zIndex: 0 }}>
                 <SceneLights />
                 {isPresent && (
-                  <ScrollControls pages={pages} damping={0.28} style={{ zIndex: "1" }}>
+                  <ScrollControls pages={pages} damping={0.28} style={{ zIndex: "1", scrollBehavior: "auto" }}>
                     <ScrollViewportBridge onReady={setScrollViewport} />
                     <StoryScene heroAnchor={heroAnchor} heroIntroProgress={heroIntroProgress} sectionRanges={sectionRanges} />
                     <Scroll html style={{ width: "100%", position: "absolute", inset: 0, zIndex: 1 }}>

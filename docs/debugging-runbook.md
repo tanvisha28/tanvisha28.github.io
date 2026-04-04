@@ -52,6 +52,18 @@ Fix strategy:
 - Re-test.
 - Only adjust `StoryScene` Z positions if the DOM fix leaves the 3D pacing visibly off.
 
+## Failure Mode: Homepage Opens Mid-Page Instead Of The Hero
+
+Likely cause: the hidden Drei `ScrollControls` viewport kept or inherited a non-top scroll position.
+
+Check:
+
+1. [`src/pages/Home.tsx`](../src/pages/Home.tsx) still initializes the canvas scroll viewport once on a no-hash home entry instead of resetting it from multiple places.
+2. The inner viewport still resets to Drei's expected top offset (`scrollTop = 1`) rather than `0`.
+3. Direct hash entry such as `/#projects` still skips the hero reset and scrolls to the target section.
+4. [`src/index.css`](../src/index.css) does not apply `scroll-behavior: smooth` to every element, which can affect the hidden scroll container created by `ScrollControls`.
+5. The `<ScrollControls>` style in `Home.tsx` still forces `scrollBehavior: "auto"` on the hidden viewport.
+
 ## Failure Mode: Hero Background No Longer Centers On The Portrait
 
 Likely cause: the DOM-to-scene anchor path drifted.
