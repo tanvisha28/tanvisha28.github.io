@@ -43,7 +43,7 @@
   - Each affected `/:profileSlug` home route loads more than the navbar.
   - Scroll from hero to contact without sections clipping.
   - Contact is followed immediately by the footer at the bottom of the homepage.
-  - Hash navigation works for `#projects`, `#experience`, and `#contact` inside the active profile route.
+  - Hash navigation works for `#projects`, `#experience`, `#education`, and `#contact` inside the active profile route.
   - Project detail routes load and the back link returns to the correct profile homepage.
 - If you touched `portfolioData`, verify every affected section on both routes.
 

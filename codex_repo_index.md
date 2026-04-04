@@ -31,7 +31,7 @@ Read this file with `AGENTS.md` and [`code_repo_update.md`](code_repo_update.md)
 
 1. `#contact` and the footer must remain the last two top-level homepage scroll sections in `src/pages/Home.tsx`.
 2. All top-level homepage sections must keep the `data-home-scroll-section` markers used by `pages` measurement and invariant checks.
-3. Hash links for `#projects`, `#experience`, and `#contact` must continue to work.
+3. Hash links for `#projects`, `#experience`, `#education`, and `#contact` must continue to work.
 4. The outer homepage HTML scroll container stays `pointer-events-none`, and interactive descendants stay inside `pointer-events-auto` wrappers.
 5. The footer stays under the homepage scroll stack for each `/:profileSlug` home route; do not move it into shared layout for the home route.
 
@@ -51,7 +51,7 @@ Read this file with `AGENTS.md` and [`code_repo_update.md`](code_repo_update.md)
 - Manual homepage smoke pass:
   - hero to contact scroll works on each affected `/:profileSlug` homepage
   - footer is visible directly below contact
-  - navbar hashes for `#projects`, `#experience`, and `#contact` land correctly inside the active profile route
+  - navbar hashes for `#projects`, `#experience`, `#education`, and `#contact` land correctly inside the active profile route
   - hero CTAs are clickable
   - the homepage works on desktop and a short laptop-height viewport
 - If docs changed, do a contradiction pass across `AGENTS.md`, this file, and the edited docs
@@ -64,7 +64,7 @@ Read AGENTS.md, codex_repo_index.md, and code_repo_update.md first. Work on main
 Treat these as non-negotiable invariants:
 1. #contact and footer must remain the last two top-level homepage scroll sections in Home.tsx.
 2. All top-level homepage sections must keep the dedicated scroll-section markers used by pages measurement.
-3. Hash links for #projects, #experience, and #contact must keep working.
+3. Hash links for #projects, #experience, #education, and #contact must keep working.
 4. The outer Scroll html container stays pointer-events-none and interactive section wrappers stay pointer-events-auto.
 
 Make the smallest safe diff. Do not redesign unrelated sections. After any homepage edit, run npm run lint and npm run build, then manually verify:

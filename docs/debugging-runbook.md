@@ -60,7 +60,7 @@ Check:
 
 1. [`src/pages/Home.tsx`](../src/pages/Home.tsx) still initializes the canvas scroll viewport once on a no-hash home entry instead of resetting it from multiple places.
 2. The inner viewport still resets to Drei's expected top offset (`scrollTop = 1`) rather than `0`.
-3. Direct hash entry such as `/dataengineer#projects` still skips the hero reset and scrolls to the target section.
+3. Direct hash entry such as `/dataengineer#projects` or `/dataengineer#education` still skips the hero reset and scrolls to the target section.
 4. [`src/index.css`](../src/index.css) does not apply `scroll-behavior: smooth` to every element, which can affect the hidden scroll container created by `ScrollControls`.
 5. The `<ScrollControls>` style in `Home.tsx` still forces `scrollBehavior: "auto"` on the hidden viewport.
 
@@ -103,12 +103,13 @@ Check:
 
 Check:
 
-1. The target section `id` still exists in `Home.tsx`.
+1. The target section `id` and matching section nav anchor still exist in `Home.tsx`.
 2. Navbar links still point to the right hash.
 3. `ScrollViewportBridge` is still capturing the correct scroll viewport element in canvas mode.
 4. `ScrollToTop.tsx` still performs the global top reset for normal route changes, but skips it for valid restoreable home returns. The home page itself still owns hash scrolling.
 5. The route still lands on the expected `/:profileSlug` homepage before the hash-based scroll runs.
 6. The active route should be `/:profileSlug#section`, not an unscoped hash like `/#projects`.
+7. The section target should align below the fixed navbar, not at the padded outer section wrapper.
 
 ## Failure Mode: GitHub Pages Direct Routes Return 404
 

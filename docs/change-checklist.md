@@ -28,7 +28,7 @@
 - Update `code_repo_update.md` if the repo contract changed
 - If the UI changed, manually verify the affected route(s)
 - For homepage edits, explicitly verify that `#contact` is present and the footer is directly below it
-- For homepage edits, verify `#projects`, `#experience`, and `#contact` hash navigation inside each affected profile route
+- For homepage edits, verify `#projects`, `#experience`, `#education`, and `#contact` hash navigation inside each affected profile route
 - Check README, AGENTS docs, `code_repo_update.md`, and edited docs for contradictions if you touched any of them
 
 ## In The Handoff Summary

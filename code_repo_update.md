@@ -39,6 +39,13 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 
 ### 2026-04-04
 
+- Corrected homepage hash navigation so profile-scoped navbar jumps land on the visible section start instead of the padded section wrapper:
+  - `src/pages/Home.tsx` now uses explicit section nav anchors plus a delayed hash-settle flow that waits until the current scroll container can reach the final target before clearing the pending jump
+  - `src/components/Layout.tsx` now exposes `Education` as a first-class profile hash destination alongside `Projects`, `Experience`, and `Get in Touch`
+  - contributor docs now treat `#education` as part of the supported homepage hash-link contract and document the new anchor-based alignment behavior
+
+### 2026-04-04
+
 - Tightened case-study return behavior so home restoration waits for the real saved offset instead of restoring as soon as the homepage becomes merely scrollable:
   - `src/pages/Home.tsx` now keeps restore state pending until the canvas or DOM scroll container can actually reach the saved snapshot, then applies the restore and triggers a transient resume highlight for the originating project card
   - `src/components/ScrollToTop.tsx` now defers all top resets whenever a valid home restore is pending, leaving restore completion to `Home`

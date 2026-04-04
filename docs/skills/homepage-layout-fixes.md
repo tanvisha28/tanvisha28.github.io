@@ -35,7 +35,7 @@ Use this when changing homepage spacing, section rhythm, card density, section o
 - `npm run build`
 - Scroll from hero to contact on desktop width
 - Confirm contact is present and the footer appears immediately below it
-- Verify `#projects`, `#experience`, and `#contact` hash navigation still lands correctly
+- Verify `#projects`, `#experience`, `#education`, and `#contact` hash navigation still lands correctly
 - Verify the hero still reads as a full-screen intro
 - Verify the projects and experience sections do not feel disconnected from the 3D depth
 - Verify buttons and links are still clickable

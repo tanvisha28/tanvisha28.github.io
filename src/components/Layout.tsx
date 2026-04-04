@@ -25,6 +25,7 @@ function useProfileNavLinks(profileSlug: ProfileSlug) {
     { name: "Home", path: getProfileHomePath(profileSlug) },
     { name: "Projects", path: getProfileHashPath(profileSlug, "projects"), hash: "#projects" },
     { name: "Experience", path: getProfileHashPath(profileSlug, "experience"), hash: "#experience" },
+    { name: "Education", path: getProfileHashPath(profileSlug, "education"), hash: "#education" },
     { name: "Get in Touch", path: getProfileHashPath(profileSlug, "contact"), hash: "#contact" },
   ];
 }
@@ -87,6 +88,7 @@ export function Navbar({
 
   return (
     <nav
+      data-site-navbar
       className={cn(
         "fixed top-0 left-0 w-full z-50 transition-all duration-300 bg-black border-b border-white/10",
         scrolled ? "py-4" : "py-6"

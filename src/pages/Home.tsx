@@ -34,7 +34,19 @@ import {
 
 const HOME_SCROLL_SECTION_ORDER = ["hero", "about", "skills", "projects", "experience", "education", "contact", "footer"] as const;
 type HomeScrollSectionName = (typeof HOME_SCROLL_SECTION_ORDER)[number];
+const HOME_HASH_SECTION_IDS = ["projects", "experience", "education", "contact"] as const;
+type HomeHashSectionId = (typeof HOME_HASH_SECTION_IDS)[number];
 const HOME_SCROLL_SECTION_SELECTOR = ":scope > [data-home-scroll-section]";
+const HOME_NAV_ANCHOR_BUFFER_PX = 18;
+
+function isHomeHashSectionId(value: string): value is HomeHashSectionId {
+  return HOME_HASH_SECTION_IDS.includes(value as HomeHashSectionId);
+}
+
+function getHomeHashSectionId(hash: string) {
+  const normalizedHash = hash.replace(/^#/, "");
+  return isHomeHashSectionId(normalizedHash) ? normalizedHash : null;
+}
 
 function getHomeScrollSections(element: HTMLElement) {
   return Array.from(element.querySelectorAll<HTMLElement>(HOME_SCROLL_SECTION_SELECTOR));
@@ -48,6 +60,10 @@ function getHomeScrollSectionNames(element: HTMLElement) {
 
 function clamp01(value: number) {
   return Math.max(0, Math.min(1, value));
+}
+
+function SectionNavAnchor({ sectionId }: { sectionId: HomeHashSectionId }) {
+  return <div aria-hidden data-home-nav-anchor={sectionId} className="pointer-events-none h-0 w-full" />;
 }
 
 function measureSceneSectionRange(
@@ -385,6 +401,7 @@ function HomeScrollContent({
       {/* Projects */}
       <section id="projects" data-home-scroll-section="projects" className="px-6 py-20 md:py-24">
         <div className="pointer-events-auto max-w-7xl mx-auto">
+          <SectionNavAnchor sectionId="projects" />
           <AnimatedSectionIntro
             className={`mb-14 max-w-5xl ${sectionIntroClassName}`}
             soundRevealId="projects-intro"
@@ -414,6 +431,7 @@ function HomeScrollContent({
       {/* Experience */}
       <section id="experience" data-home-scroll-section="experience" className="px-6 py-16 md:py-20">
         <div className="pointer-events-auto w-full max-w-7xl mx-auto">
+          <SectionNavAnchor sectionId="experience" />
           <AnimatedSectionIntro
             className={`mb-12 max-w-4xl ${sectionIntroClassName}`}
             soundRevealId="experience-intro"
@@ -441,6 +459,7 @@ function HomeScrollContent({
       {/* Education */}
       <section id="education" data-home-scroll-section="education" className="px-6 py-16 md:py-20">
         <div className="pointer-events-auto max-w-7xl mx-auto">
+          <SectionNavAnchor sectionId="education" />
           <AnimatedSectionIntro className={`mb-12 max-w-5xl ${sectionIntroClassName}`} motionViewportRoot={motionViewportRoot}>
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(52,211,153,0.14),transparent_58%)]" />
             <div className="relative text-center">
@@ -463,6 +482,7 @@ function HomeScrollContent({
       >
         <div aria-hidden className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_72%_34%,rgba(16,185,129,0.14),transparent_40%)]" />
         <div className="pointer-events-auto relative z-10 max-w-5xl mx-auto">
+          <SectionNavAnchor sectionId="contact" />
           <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/[0.58] px-6 py-8 shadow-[0_0_80px_rgba(0,0,0,0.34)] backdrop-blur-xl md:px-10 md:py-10">
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_56%)]" />
             <div className="relative grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
@@ -627,6 +647,7 @@ export default function Home() {
   const heroSectionRef = useRef<HTMLElement>(null);
   const heroPortraitRef = useRef<HTMLDivElement>(null);
   const [homeRestoreStatus, setHomeRestoreStatus] = useState<"idle" | "pending" | "restored">("idle");
+  const [pendingHashSection, setPendingHashSection] = useState<{ sectionId: HomeHashSectionId; settledTargetTop: number | null } | null>(null);
   const [restoredProjectId, setRestoredProjectId] = useState<string | null>(null);
   const heroAnchorX = useMotionValue(0);
   const heroAnchorY = useMotionValue(0.18);
@@ -686,6 +707,81 @@ export default function Home() {
     scrollViewport.scrollTo({ top: clampedTarget, behavior: "auto" });
   };
 
+  const getHomeNavScrollClearance = () => {
+    const navbar = document.querySelector<HTMLElement>("[data-site-navbar]");
+    const navbarHeight = navbar?.getBoundingClientRect().height ?? 88;
+    return navbarHeight + HOME_NAV_ANCHOR_BUFFER_PX;
+  };
+
+  const resolveHomeNavAnchor = (sectionId: HomeHashSectionId) => {
+    const container = containerRef.current;
+    if (!container) return null;
+
+    return (
+      container.querySelector<HTMLElement>(`[data-home-nav-anchor="${sectionId}"]`) ??
+      document.getElementById(sectionId)
+    );
+  };
+
+  const getSectionScrollMetrics = (sectionId: HomeHashSectionId) => {
+    const anchor = resolveHomeNavAnchor(sectionId);
+    if (!anchor) return null;
+
+    const clearance = getHomeNavScrollClearance();
+    const scrollViewport = scrollViewportRef.current;
+
+    if (scrollViewport) {
+      const viewportRect = scrollViewport.getBoundingClientRect();
+      const anchorRect = anchor.getBoundingClientRect();
+      const maxScroll = Math.max(1, scrollViewport.scrollHeight - scrollViewport.clientHeight);
+      const rawTargetTop = scrollViewport.scrollTop + (anchorRect.top - viewportRect.top) - clearance;
+      const targetTop = Math.max(1, Math.min(rawTargetTop, maxScroll));
+
+      return {
+        mode: "canvas" as const,
+        targetTop,
+        rawTargetTop,
+        maxScroll,
+      };
+    }
+
+    const scrollingElement = document.scrollingElement;
+    const scrollHeight = scrollingElement?.scrollHeight ?? document.documentElement.scrollHeight ?? 0;
+    const clientHeight = scrollingElement?.clientHeight ?? window.innerHeight ?? document.documentElement.clientHeight ?? 0;
+    const maxScroll = Math.max(0, scrollHeight - clientHeight);
+    const rawTargetTop = window.scrollY + anchor.getBoundingClientRect().top - clearance;
+    const targetTop = Math.max(0, Math.min(rawTargetTop, maxScroll));
+
+    return {
+      mode: "dom" as const,
+      targetTop,
+      rawTargetTop,
+      maxScroll,
+    };
+  };
+
+  const applySectionScroll = (sectionId: HomeHashSectionId, behavior: ScrollBehavior = "smooth") => {
+    const metrics = getSectionScrollMetrics(sectionId);
+    if (!metrics) return false;
+
+    if (metrics.maxScroll + 1 < metrics.rawTargetTop) {
+      return false;
+    }
+
+    if (metrics.mode === "canvas") {
+      const scrollViewport = scrollViewportRef.current;
+      if (!scrollViewport) return false;
+
+      scrollViewport.scrollLeft = 0;
+      scrollViewport.scrollTo({ top: metrics.targetTop, behavior });
+      return true;
+    }
+
+    document.scrollingElement?.scrollTo({ top: metrics.targetTop, left: 0, behavior });
+    window.scrollTo({ top: metrics.targetTop, left: 0, behavior });
+    return true;
+  };
+
   const canReachWindowRestoreTarget = (targetTop: number) => {
     const normalizedTarget = Math.max(0, targetTop);
     const scrollingElement = document.scrollingElement;
@@ -731,13 +827,21 @@ export default function Home() {
 
   useEffect(() => {
     enteredHomeWithHashRef.current = Boolean(hash);
+    const hashSectionId = getHomeHashSectionId(hash);
 
     if (hash) {
       clearPendingHomeRestore(profileSlug);
       setRestoredProjectId(null);
+      setPendingHashSection(
+        shouldPreserveHomeScroll || !hashSectionId
+          ? null
+          : { sectionId: hashSectionId, settledTargetTop: null }
+      );
       setHomeRestoreStatus("idle");
       return;
     }
+
+    setPendingHashSection(null);
 
     const explicitRestore = getHomeRestoreState(location.state);
     if (explicitRestore?.profileSlug === profileSlug) {
@@ -755,7 +859,7 @@ export default function Home() {
     clearPendingHomeRestore(profileSlug);
     setRestoredProjectId(null);
     setHomeRestoreStatus("idle");
-  }, [hash, location.state, navigationType, profileSlug, locationKey]);
+  }, [hash, location.state, navigationType, profileSlug, locationKey, shouldPreserveHomeScroll]);
 
   const disableCanvas = () => {
     scrollViewportRef.current = null;
@@ -984,21 +1088,17 @@ export default function Home() {
   }, [pages, scrollViewportVersion]);
 
   const scrollToSection = (sectionId: string, behavior: ScrollBehavior = "smooth") => {
-    const element = document.getElementById(sectionId);
-    const scrollViewport = scrollViewportRef.current;
-    if (!element) return;
-
-    if (!scrollViewport) {
-      element.scrollIntoView({ behavior, block: "start" });
+    const hashSectionId = isHomeHashSectionId(sectionId) ? sectionId : null;
+    if (hashSectionId) {
+      const didApply = applySectionScroll(hashSectionId, behavior);
+      if (!didApply) {
+        setPendingHashSection({ sectionId: hashSectionId, settledTargetTop: null });
+      }
       return;
     }
 
-    const maxScroll = scrollViewport.scrollHeight - scrollViewport.clientHeight;
-    const targetTop = Math.min(element.offsetTop, maxScroll);
-    scrollViewport.scrollTo({
-      top: Math.max(0, targetTop),
-      behavior,
-    });
+    const element = document.getElementById(sectionId);
+    element?.scrollIntoView({ behavior, block: "start" });
   };
 
   const sectionIntroClassName =
@@ -1068,20 +1168,34 @@ export default function Home() {
   }, [hash, isCanvasEnabled, pages, scrollViewportVersion, shouldPreserveHomeScroll]);
 
   useEffect(() => {
-    const sectionId = hash.replace("#", "");
-    if (!sectionId) return;
+    if (!pendingHashSection || shouldPreserveHomeScroll) return;
 
-    let frame = 0;
-    frame = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        scrollToSection(sectionId, "auto");
-      });
-    });
+    const metrics = getSectionScrollMetrics(pendingHashSection.sectionId);
+    if (!metrics) return;
+    if (metrics.maxScroll + 1 < metrics.rawTargetTop) return;
 
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
-  }, [hash, scrollViewportVersion, isCanvasEnabled]);
+    applySectionScroll(pendingHashSection.sectionId, "auto");
+
+    if (pendingHashSection.settledTargetTop !== null && Math.abs(pendingHashSection.settledTargetTop - metrics.targetTop) <= 1) {
+      const timeout = window.setTimeout(() => {
+        setPendingHashSection((current) =>
+          current?.sectionId === pendingHashSection.sectionId ? null : current
+        );
+      }, 120);
+
+      return () => window.clearTimeout(timeout);
+    }
+
+    const timeout = window.setTimeout(() => {
+      setPendingHashSection((current) =>
+        current?.sectionId === pendingHashSection.sectionId
+          ? { sectionId: current.sectionId, settledTargetTop: metrics.targetTop }
+          : current
+      );
+    }, 180);
+
+    return () => window.clearTimeout(timeout);
+  }, [pendingHashSection, pages, scrollViewportVersion, shouldPreserveHomeScroll, isCanvasEnabled]);
 
   useEffect(() => {
     const previousHash = previousHashRef.current;
