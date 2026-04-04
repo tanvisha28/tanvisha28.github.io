@@ -6,23 +6,41 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Github, Linkedin, Mail, FileText, Menu, X } from "lucide-react";
-import { useState, useEffect } from "react";
-import { portfolioData } from "../data/portfolioData";
+import { useState, useEffect, type ReactNode } from "react";
+import type { PortfolioData, ProfileSlug } from "../data/portfolioData";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { SoundToggle } from "./SoundToggle";
 import { useSoundInteractions } from "../audio/useSoundInteractions";
 import { getEmailComposeUrl } from "../utils/contact";
+import { getProfileHashPath, getProfileHomePath } from "../utils/profileRoutes";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function Navbar() {
+function useProfileNavLinks(profileSlug: ProfileSlug) {
+  return [
+    { name: "Home", path: getProfileHomePath(profileSlug) },
+    { name: "Projects", path: getProfileHashPath(profileSlug, "projects"), hash: "#projects" },
+    { name: "Experience", path: getProfileHashPath(profileSlug, "experience"), hash: "#experience" },
+    { name: "Get in Touch", path: getProfileHashPath(profileSlug, "contact"), hash: "#contact" },
+  ];
+}
+
+export function Navbar({
+  profileSlug,
+  portfolioData,
+}: {
+  profileSlug: ProfileSlug;
+  portfolioData: PortfolioData;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { withClickSound } = useSoundInteractions();
+  const navLinks = useProfileNavLinks(profileSlug);
+  const homePath = getProfileHomePath(profileSlug);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -30,12 +48,17 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Projects", path: "/#projects" },
-    { name: "Experience", path: "/#experience" },
-    { name: "Get in Touch", path: "/#contact" },
-  ];
+  const isActiveLink = (hash?: string) => {
+    if (location.pathname !== homePath) {
+      return false;
+    }
+
+    if (!hash) {
+      return !location.hash;
+    }
+
+    return location.hash === hash;
+  };
 
   return (
     <nav
@@ -45,12 +68,15 @@ export function Navbar() {
       )}
     >
       <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-        <Link to="/" onClick={withClickSound()} className="text-xl font-bold tracking-tighter text-white">
+        <Link
+          to={homePath}
+          onClick={withClickSound()}
+          className="text-xl font-bold tracking-tighter text-white"
+        >
           {portfolioData.personal.name.split(" ")[0]}
           <span className="text-emerald-500">.</span>
         </Link>
 
-        {/* Desktop Nav */}
         <div className="hidden md:flex items-center space-x-6">
           {navLinks.map((link) => (
             <Link
@@ -59,7 +85,7 @@ export function Navbar() {
               onClick={withClickSound()}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-emerald-400",
-                location.pathname === link.path ? "text-emerald-400" : "text-gray-400"
+                isActiveLink(link.hash) ? "text-emerald-400" : "text-gray-400"
               )}
             >
               {link.name}
@@ -77,7 +103,6 @@ export function Navbar() {
           </a>
         </div>
 
-        {/* Mobile Nav Toggle */}
         <div className="flex items-center gap-3 md:hidden">
           <SoundToggle className="px-3 py-2 text-[10px] tracking-[0.18em]" />
           <button className="text-white" onClick={withClickSound(() => setIsOpen((current) => !current))}>
@@ -86,7 +111,6 @@ export function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Nav Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -121,17 +145,13 @@ export function Navbar() {
   );
 }
 
-export function Footer() {
+export function Footer({ portfolioData }: { portfolioData: PortfolioData }) {
   return (
     <footer className="w-full border-t border-white/8 bg-black/92 px-6 py-6 backdrop-blur-md md:py-5">
       <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center md:gap-6">
         <div className="text-center md:text-left">
-          <h3 className="text-lg font-semibold tracking-tight text-white">
-            {portfolioData.personal.name}
-          </h3>
-          <p className="mt-1 max-w-sm text-sm leading-relaxed text-gray-500">
-            Building scalable systems and intelligent data platforms.
-          </p>
+          <h3 className="text-lg font-semibold tracking-tight text-white">{portfolioData.personal.name}</h3>
+          <p className="mt-1 max-w-sm text-sm leading-relaxed text-gray-500">{portfolioData.footer.tagline}</p>
         </div>
 
         <div className="flex items-center justify-center gap-2 rounded-full border border-white/8 bg-white/[0.02] px-3 py-2 text-gray-400">
@@ -177,10 +197,18 @@ export function Footer() {
   );
 }
 
-export function Layout({ children }: { children: React.ReactNode }) {
+export function Layout({
+  children,
+  profileSlug,
+  portfolioData,
+}: {
+  children: ReactNode;
+  profileSlug: ProfileSlug;
+  portfolioData: PortfolioData;
+}) {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-emerald-500 selection:text-white font-sans">
-      <Navbar />
+      <Navbar profileSlug={profileSlug} portfolioData={portfolioData} />
       <main>{children}</main>
     </div>
   );

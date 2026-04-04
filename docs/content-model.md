@@ -2,9 +2,15 @@
 
 ## Source Of Truth
 
-All user-facing portfolio content lives in [`src/data/portfolioData.ts`](../src/data/portfolioData.ts).
+All user-facing portfolio content lives in the profile-keyed `portfolioProfiles` map in [`src/data/portfolioData.ts`](../src/data/portfolioData.ts).
 
 ## Top-Level Shape
+
+- `profileSlugs`
+- `defaultProfileSlug`
+- `portfolioProfiles`
+
+Each entry in `portfolioProfiles` contains:
 
 - `personal`
 - `metrics`
@@ -13,6 +19,8 @@ All user-facing portfolio content lives in [`src/data/portfolioData.ts`](../src/
 - `experience`
 - `education`
 - `certifications`
+- `sectionCopy`
+- `footer`
 
 ## `personal`
 
@@ -38,7 +46,11 @@ Important fields:
 Repo-specific notes:
 
 - The homepage avatar comes from [`public/profile.jpg`](../public/profile.jpg), not from `portfolioData`.
-- `resume` is linked in multiple places and should normally point at the shared asset path `/resume.pdf`.
+- `resume` is linked in multiple places and is profile-specific:
+  - Data Engineer: `/resume.pdf`
+  - Software Engineer: `/Resume_Software_Engineer.pdf`
+  - Data Scientist: `/Resume_Data%20Scientist.pdf`
+  - Data Analyst: `/Resume_Data%20Analyst.pdf`
 
 ## `metrics`
 
@@ -67,6 +79,8 @@ Required fields:
 - `id`
 - `title`
 - `type`
+- `typeLabel`
+- `icon`
 - `summary`
 - `role`
 - `domain`
@@ -83,12 +97,14 @@ Required fields:
 
 Repo-specific rules:
 
-- `id` must stay stable and URL-safe because it becomes `/project/:id`.
+- `id` must stay stable and URL-safe within each profile because it becomes `/:profileSlug/project/:id`.
 - `type` must stay one of `AI`, `DE`, or `DS` unless the UI is extended.
+- `typeLabel` is the display-facing project category used in the UI. It can say `Software Engineering`, `Data Analytics`, and similar role framing without changing the visual scene type.
+- `icon` is data-driven and controls the project card icon in `HomeSections.tsx`.
 - `flow` is split on `" -> "` in `ProjectDetail.tsx`. Keep that exact delimiter if you want the visual system flow pills to render correctly.
-- `projects` array order drives:
+- Each profile's `projects` array order drives:
   - the homepage project sequence
-  - the next-project CTA on detail pages
+  - the next-project CTA on that profile's detail pages
 
 Known gap:
 
@@ -123,6 +139,28 @@ Rules:
 ## `certifications`
 
 Currently stored but not rendered anywhere. Updating this section alone has no visible product effect.
+
+## `sectionCopy`
+
+Used by the homepage for profile-specific section intros and contact framing.
+
+Important fields:
+
+- `about`
+- `skills`
+- `projects`
+- `experience`
+- `education`
+- `contact`
+
+Repo-specific notes:
+
+- This is where role-specific homepage titles, descriptions, footer-facing contact framing, and profile chips belong.
+- Keep section copy concise enough for the existing cinematic layout.
+
+## `footer`
+
+Used by the shared footer tagline. Keep it short enough to avoid wrapping badly on smaller screens.
 
 ## When A Content Change Needs Code
 

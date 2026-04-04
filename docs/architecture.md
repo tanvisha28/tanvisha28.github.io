@@ -17,14 +17,19 @@
 ## Route Structure
 
 - `/`
-  - Renders a fade transition wrapper with `motion`.
+  - Redirects to the default profile homepage at `/dataengineer`.
+- `/:profileSlug`
+  - Reads `profileSlug` from the route.
+  - Loads the matching profile from `portfolioProfiles`.
   - Uses a fixed full-screen `Canvas` when WebGL setup succeeds.
   - Falls back to a DOM-only homepage when WebGL capability detection fails or the canvas throws at runtime.
   - Uses `ScrollControls` and `<Scroll html>` to combine WebGL depth with DOM content in canvas mode.
-- `/project/:id`
-  - Reads `id` from the route.
-  - Looks up the matching project in `portfolioData.projects`.
+- `/:profileSlug/project/:id`
+  - Reads `profileSlug` and `id` from the route.
+  - Looks up the matching project only inside the active profile's `projects` array.
   - Chooses one of three 3D scenes from `ProjectScenes.tsx`.
+- `/project/:id`
+  - Redirects legacy project URLs to `/dataengineer/project/:id` when the project exists in the default profile.
 
 ## Homepage Architecture
 
@@ -37,14 +42,14 @@ The homepage is the most fragile part of the repo because it mixes three systems
 ### Rendering Layers
 
 - `App` wraps the router in `SoundProvider`, so sound state is available to both route-level pages and shared layout chrome.
-- `Layout` renders the navbar, sound toggle, and route wrapper.
+- `Layout` renders the navbar, sound toggle, and route wrapper using the active profile's shared copy and links.
 - `Home` gates canvas rendering through `canCreateWebGLContext` plus `CanvasErrorBoundary`.
 - `ScrollViewportBridge` captures Drei's scroll viewport so the page can drive hash navigation, measurement, and motion viewport roots from the same element.
 - `SceneLights` and `StoryScene` render the homepage 3D environment.
 - `StoryScene` combines `HeroScene` with `HomeLowerScene`.
 - `HomeScrollContent` renders the actual content sections inside `<Scroll html>` in canvas mode and directly in DOM fallback mode.
 - Top-level homepage sections are tracked with `data-home-scroll-section` markers. They are the source of truth for both `pages` measurement and section-range measurement.
-- The current homepage section stack is `hero -> about -> skills -> projects -> experience -> education -> contact -> footer`.
+- The current homepage section stack for each `/:profileSlug` route is `hero -> about -> skills -> projects -> experience -> education -> contact -> footer`.
 - `homeSceneData.ts` owns the lower-scene geometry, responsive density tuning, and default measured section ranges used by `HomeLowerScene`.
 
 ### Why It Is Fragile
@@ -60,7 +65,7 @@ The homepage is the most fragile part of the repo because it mixes three systems
 
 - `ProjectDetail` is a conventional DOM page with a hero `Canvas` at the top and standard sections below it.
 - Accent color and project scene are selected from `project.type`.
-- The next-project CTA is computed from the current index in `portfolioData.projects`.
+- The next-project CTA is computed from the current index in the active profile's `projects` array.
 
 ### Consequences
 
@@ -70,9 +75,10 @@ The homepage is the most fragile part of the repo because it mixes three systems
 
 ## Data Flow
 
-- All display content comes from `portfolioData`.
-- `Home.tsx`, `Layout.tsx`, `HomeSections.tsx`, and `ProjectDetail.tsx` all read directly from that file.
-- `portfolioData.education` is now a visible homepage section, not just stored background data.
+- All display content comes from the `portfolioProfiles` map exported by `portfolioData.ts`.
+- `Home.tsx`, `Layout.tsx`, `HomeSections.tsx`, and `ProjectDetail.tsx` all resolve the active profile and read from that map.
+- Each active profile's `education` array is a visible homepage section, not just stored background data.
+- Shared nav, footer, resume links, and hash routes stay scoped to the active `profileSlug`.
 - `homeSceneData.ts` drives the lower homepage scene geometry and tuning separately from copy/content.
 - `SoundProvider` owns persisted sound preference, user-activation gating, homepage soundscape state, and visibility handling.
 - `useSoundInteractions` injects click and hover cues into shared UI and homepage interactions.

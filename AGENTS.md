@@ -4,9 +4,11 @@
 
 - Stack: React 19, Vite 6, TypeScript, Tailwind CSS v4, React Router 7, Framer Motion, React Three Fiber, Drei, and `@react-three/postprocessing`.
 - Routes:
-  - `/` renders the immersive homepage in [`src/pages/Home.tsx`](src/pages/Home.tsx).
-  - `/project/:id` renders case-study detail pages in [`src/pages/ProjectDetail.tsx`](src/pages/ProjectDetail.tsx).
-- Content source of truth: [`src/data/portfolioData.ts`](src/data/portfolioData.ts).
+  - `/` redirects to the default profile homepage `/dataengineer`.
+  - `/:profileSlug` renders the immersive homepage in [`src/pages/Home.tsx`](src/pages/Home.tsx).
+  - `/:profileSlug/project/:id` renders case-study detail pages in [`src/pages/ProjectDetail.tsx`](src/pages/ProjectDetail.tsx).
+  - `/project/:id` is a legacy redirect to `/dataengineer/project/:id` when that project exists.
+- Content source of truth: the profile-keyed `portfolioProfiles` map in [`src/data/portfolioData.ts`](src/data/portfolioData.ts).
 - 3D layer: [`src/components/3d`](src/components/3d).
 - Shared UI layer: [`src/components`](src/components).
 
@@ -38,11 +40,11 @@
 - If a task changes repo-facing architecture, routes, shared contracts, debugging guidance, or workflow expectations, update [`code_repo_update.md`](code_repo_update.md) and any linked docs in the same task.
 - Stay on `main` unless the user explicitly asks for a different branch.
 - If you touched homepage layout, 3D scenes, or routing, also do a manual smoke pass in the browser:
-  - Home route loads more than the navbar.
+  - Each affected `/:profileSlug` home route loads more than the navbar.
   - Scroll from hero to contact without sections clipping.
   - Contact is followed immediately by the footer at the bottom of the homepage.
-  - Hash navigation works for `#projects`, `#experience`, and `#contact`.
-  - Project detail routes load and the back link returns to the homepage.
+  - Hash navigation works for `#projects`, `#experience`, and `#contact` inside the active profile route.
+  - Project detail routes load and the back link returns to the correct profile homepage.
 - If you touched `portfolioData`, verify every affected section on both routes.
 
 ## Architecture Notes
@@ -51,7 +53,7 @@
 - The homepage top-level sections are tracked in `src/pages/Home.tsx` via `data-home-scroll-section`. Keep `#contact` and the footer as the final two marked sections.
 - `ScrollControls.pages` is derived from measured HTML height in [`src/pages/Home.tsx`](src/pages/Home.tsx). Large spacing or content changes can break the scroll depth if that measurement falls out of sync.
 - `StoryScene` uses hard-coded Z positions for narrative beats. Large section order or height changes can desync the 3D motion from the HTML content.
-- `ProjectDetail` picks both accent styling and the 3D project scene from `project.type`.
+- `ProjectDetail` picks both accent styling and the 3D project scene from `project.type`, while route lookups are scoped to the active `profileSlug`.
 
 ## Editing Constraints
 
@@ -61,6 +63,7 @@
 - Prefer targeted fixes over refactors.
 - Do not add dependencies unless the task clearly requires them.
 - Keep content in `portfolioData` instead of scattering copy across components.
+- Keep profile-specific copy in `portfolioProfiles` instead of scattering role variants across components.
 - Keep 3D scenes decorative and supportive. Do not move critical content into WebGL-only rendering.
 
 ## Safe Boundaries By Change Type
@@ -90,10 +93,11 @@
 
 - Start in [`docs/skills/content-and-portfolio-data-updates.md`](docs/skills/content-and-portfolio-data-updates.md).
 - Keep `project.id` stable. It drives routing.
-- Keep `projects` array order intentional. It drives both homepage ordering and the "Next Case Study" CTA.
+- Keep `project.id` stable and URL-safe within each profile. The same underlying project may appear in multiple profiles, but each profile array still owns its own route set and ordering.
+- Keep each profile `projects` array order intentional. It drives both homepage ordering and the "Next Case Study" CTA.
 - `Project.type` is currently limited to `AI`, `DE`, and `DS`. New values require UI and 3D support in multiple files.
 - `certifications` currently are stored but not rendered.
-- `personal.resume` is used by navbar and footer. Prefer a real URL over `#`.
+- `personal.resume` is profile-specific and is used by navbar, footer, and homepage resume actions. Prefer a real URL over `#`.
 
 ## Preferred Debugging Approach
 

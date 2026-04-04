@@ -1,6 +1,6 @@
 # Elite 3D Engineering Portfolio
 
-Premium React + Vite + Three.js portfolio for an engineering profile, built around a single immersive homepage canvas and data-driven case-study pages.
+Premium React + Vite + Three.js portfolio for four role-specific views of the same profile, built around immersive profile homepages and data-driven case-study pages.
 
 ## Quickstart
 
@@ -24,6 +24,13 @@ This repo is configured for GitHub Pages user-site hosting at:
 
 - `https://tanvisha28.github.io/`
 
+Role-specific entry URLs:
+
+- `https://tanvisha28.github.io/dataengineer`
+- `https://tanvisha28.github.io/softwareengineer`
+- `https://tanvisha28.github.io/datascientist`
+- `https://tanvisha28.github.io/datanalyst`
+
 Production builds use the root Vite base path `/`, and the app router uses the same runtime base. Public assets such as the profile image, resume, and optional audio files resolve through that base path so they continue to work from the user-site URL.
 
 For GitHub Pages builds, use:
@@ -46,14 +53,21 @@ For GitHub Pages builds, use:
 ## Project Structure
 
 - [`src/pages/Home.tsx`](src/pages/Home.tsx): homepage with `Canvas`, `ScrollControls`, and HTML overlay sections
-- [`src/pages/ProjectDetail.tsx`](src/pages/ProjectDetail.tsx): project detail route
+- [`src/pages/ProjectDetail.tsx`](src/pages/ProjectDetail.tsx): profile-scoped project detail route
 - [`src/components/3d`](src/components/3d): shared 3D scenes and effects
 - [`src/components`](src/components): shared layout and section components
-- [`src/data/portfolioData.ts`](src/data/portfolioData.ts): single source of truth for content
+- [`src/data/portfolioData.ts`](src/data/portfolioData.ts): profile-aware source of truth for content
+
+## Route Structure
+
+- `/` redirects to `/dataengineer`
+- `/:profileSlug` renders the active profile homepage
+- `/:profileSlug/project/:id` renders the active profile's case-study page
+- `/project/:id` remains as a legacy redirect to `/dataengineer/project/:id` when that project exists
 
 ## How The Homepage Works
 
-The homepage is intentionally not a conventional DOM page.
+Each profile homepage is intentionally not a conventional DOM page.
 
 - A fixed full-screen `Canvas` renders the 3D story.
 - Drei `ScrollControls` drive the camera movement.
@@ -90,7 +104,7 @@ Minimum for any meaningful change:
 - `npm run lint`
 - `npm run build`
 
-If the UI changed, also manually verify the homepage scroll flow and any affected project detail pages.
+If the UI changed, also manually verify the affected profile homepages, profile-scoped hash navigation, and any affected project detail pages.
 
 ## Audio Setup
 

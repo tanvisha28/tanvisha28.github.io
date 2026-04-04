@@ -2,7 +2,7 @@
 
 ## When To Use It
 
-Use this when editing the `/project/:id` experience, including the hero scene, summary grid, content sections, sticky sidebar, or next-project flow.
+Use this when editing a `/:profileSlug/project/:id` experience, including the hero scene, summary grid, content sections, sticky sidebar, or next-project flow.
 
 ## Files Usually Involved
 
@@ -13,9 +13,9 @@ Use this when editing the `/project/:id` experience, including the hero scene, s
 ## Constraints And Pitfalls
 
 - Scene choice and accent color are tied to `project.type`.
-- The next-project CTA is tied to array order, not an explicit relationship field.
+- The next-project CTA is tied to the active profile's project array order, not an explicit relationship field.
 - The source/demo controls are styled buttons, not real links today.
-- The route redirects home when `id` lookup fails.
+- The route redirects to the active profile homepage when `id` lookup fails.
 
 ## Safe Workflow
 
@@ -29,7 +29,7 @@ Use this when editing the `/project/:id` experience, including the hero scene, s
 
 - `npm run lint`
 - `npm run build`
-- Open the edited project detail page directly by URL
+- Open the edited project detail page directly by `/:profileSlug/project/:id`
 - Use the back link
 - Use the next-project CTA
 - Confirm the selected scene and accent color still match the project type
@@ -37,4 +37,4 @@ Use this when editing the `/project/:id` experience, including the hero scene, s
 ## Repo-Specific Gotchas
 
 - `flow` rendering depends on splitting the string with `" -> "`.
-- `portfolioData.projects.findIndex(...)` is used inline for the next-project link, so missing IDs or duplicates break navigation assumptions.
+- Missing IDs, duplicate IDs within a profile, or incorrect profile-scoped ordering break next-project navigation assumptions.

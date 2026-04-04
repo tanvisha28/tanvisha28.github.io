@@ -8,7 +8,7 @@ Use this for profile copy changes, metrics, skills, experience, project case-stu
 
 - [`src/data/portfolioData.ts`](../../src/data/portfolioData.ts)
 - [`public/profile.jpg`](../../public/profile.jpg) if the headshot changes
-- [`public/resume.pdf`](../../public/resume.pdf) if the resume asset changes
+- role-specific resume PDFs under `public/` if the resume assets change
 - Occasionally:
   - [`src/pages/Home.tsx`](../../src/pages/Home.tsx)
   - [`src/pages/ProjectDetail.tsx`](../../src/pages/ProjectDetail.tsx)
@@ -16,7 +16,7 @@ Use this for profile copy changes, metrics, skills, experience, project case-stu
 ## Constraints And Pitfalls
 
 - `project.id` changes break route URLs.
-- `projects` ordering is user-visible.
+- `projects` ordering is user-visible within each profile.
 - `Project.type` is not arbitrary; it drives styling and scene selection.
 - `flow` must remain a string using `" -> "` separators if you want the case-study flow UI to keep working.
 - `certifications` are currently unused, so editing them alone will not change the UI.
@@ -27,7 +27,7 @@ Use this for profile copy changes, metrics, skills, experience, project case-stu
 2. Only touch components if the requested content requires a new rendered field.
 3. Keep strings concise enough for the existing layout.
 4. If replacing links, verify every place the link is used, especially `resume`.
-5. Keep the shared resume asset on the stable public path `/resume.pdf` unless a task explicitly changes that convention.
+5. Keep each profile resume URL aligned with the asset actually shipped in `public/`.
 
 ## Verification Checklist
 
@@ -41,4 +41,4 @@ Use this for profile copy changes, metrics, skills, experience, project case-stu
 
 - The project detail page still uses placeholder buttons for source/demo actions because the data model does not yet provide URLs.
 - The homepage image fallback points to Unsplash if `public/profile.jpg` fails to load.
-- Resume actions across the app are expected to resolve through `portfolioData.personal.resume`, which should normally point at `/resume.pdf`.
+- Resume actions across the app are expected to resolve through the active profile's `personal.resume` URL.

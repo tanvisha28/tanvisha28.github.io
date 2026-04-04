@@ -5,6 +5,7 @@
 
 import { motion } from "motion/react";
 import {
+  AppWindow,
   ArrowRight,
   ChartCandlestick,
   ChartColumnIncreasing,
@@ -12,7 +13,9 @@ import {
   FlaskConical,
   Gauge,
   GraduationCap,
+  Languages,
   ServerCog,
+  ShieldCheck,
 } from "lucide-react";
 import { Project, Experience, SkillGroup, Education } from "../data/portfolioData";
 import { clsx, type ClassValue } from "clsx";
@@ -26,11 +29,17 @@ function cn(...inputs: ClassValue[]) {
 
 function getProjectTone(project: Project) {
   const icon =
-    project.id === "agentic-orchestrator"
+    project.icon === "trend"
       ? ChartCandlestick
-      : project.id === "lakehouse-platform"
+      : project.icon === "pipeline"
         ? DatabaseZap
-        : Gauge;
+        : project.icon === "monitoring"
+          ? Gauge
+          : project.icon === "application"
+            ? AppWindow
+            : project.icon === "translation"
+              ? Languages
+              : ShieldCheck;
 
   const type = project.type;
 
@@ -229,7 +238,7 @@ export function ProjectTree({
 
                   <span className={cn("mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-bold uppercase tracking-widest", tone.badge)}>
                     <Icon size={14} />
-                    {project.type} Project
+                    {project.typeLabel}
                   </span>
 
                   <h3 className="mb-3 text-3xl font-bold text-white md:text-4xl">{project.title}</h3>

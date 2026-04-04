@@ -9,7 +9,7 @@ Read this file with `AGENTS.md` and [`code_repo_update.md`](code_repo_update.md)
 - Homepage route and scroll contract: `src/pages/Home.tsx`
 - Homepage 3D layer: `src/components/3d`
 - Shared homepage content blocks: `src/components/HomeSections.tsx`
-- Content source of truth: `src/data/portfolioData.ts`
+- Content source of truth: profile-keyed `portfolioProfiles` in `src/data/portfolioData.ts`
 - Repo-specific playbooks: `docs/skills`
 
 ## Default Working Rules
@@ -22,7 +22,8 @@ Read this file with `AGENTS.md` and [`code_repo_update.md`](code_repo_update.md)
 
 ## Homepage Architecture
 
-- `/` is a fixed `Canvas` scene with Drei `ScrollControls` and a `<Scroll html>` content layer.
+- `/:profileSlug` is a fixed `Canvas` scene with Drei `ScrollControls` and a `<Scroll html>` content layer.
+- `/` redirects to the default profile homepage at `/dataengineer`.
 - The homepage is not a normal DOM page. Scroll depth depends on the measured height of the top-level homepage scroll sections in `src/pages/Home.tsx`.
 - Top-level homepage sections are tracked with `data-home-scroll-section`. Do not remove or rename those markers without updating the scroll contract.
 
@@ -32,7 +33,7 @@ Read this file with `AGENTS.md` and [`code_repo_update.md`](code_repo_update.md)
 2. All top-level homepage sections must keep the `data-home-scroll-section` markers used by `pages` measurement and invariant checks.
 3. Hash links for `#projects`, `#experience`, and `#contact` must continue to work.
 4. The outer homepage HTML scroll container stays `pointer-events-none`, and interactive descendants stay inside `pointer-events-auto` wrappers.
-5. The footer stays under the homepage scroll stack for `/`; do not move it into shared layout for the home route.
+5. The footer stays under the homepage scroll stack for each `/:profileSlug` home route; do not move it into shared layout for the home route.
 
 ## Homepage Repair Workflow
 
@@ -48,9 +49,9 @@ Read this file with `AGENTS.md` and [`code_repo_update.md`](code_repo_update.md)
 - `npm run build`
 - `code_repo_update.md` and linked docs reflect any repo-facing contract changes from the task
 - Manual homepage smoke pass:
-  - hero to contact scroll works
+  - hero to contact scroll works on each affected `/:profileSlug` homepage
   - footer is visible directly below contact
-  - navbar hashes for `#projects`, `#experience`, and `#contact` land correctly
+  - navbar hashes for `#projects`, `#experience`, and `#contact` land correctly inside the active profile route
   - hero CTAs are clickable
   - the homepage works on desktop and a short laptop-height viewport
 - If docs changed, do a contradiction pass across `AGENTS.md`, this file, and the edited docs

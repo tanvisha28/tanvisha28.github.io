@@ -39,6 +39,19 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 
 ### 2026-04-04
 
+- Converted the portfolio from a single profile into four role-specific variants served from profile-scoped routes:
+  - `/` redirects to `/dataengineer`
+  - `/:profileSlug` renders the active profile homepage
+  - `/:profileSlug/project/:id` renders the active profile case-study route
+  - `/project/:id` remains as a legacy redirect into the default profile when possible
+- Replaced the single exported `portfolioData` object with a profile-keyed `portfolioProfiles` map in `src/data/portfolioData.ts`:
+  - profile-specific headlines, about copy, focus areas, metrics, skills, experience emphasis, project framing, resume URLs, contact copy, and footer taglines now live in data
+  - project display labels and project card icons are now data-driven while 3D scene selection still depends on the existing `AI` / `DE` / `DS` visual types
+- Updated shared layout, homepage, and project detail navigation so hash links, resume links, back links, and next-project flows stay inside the active profile route.
+- Refreshed contributor docs to describe the new routing and data contract, including profile-specific resume assets and profile-scoped project IDs.
+
+### 2026-04-04
+
 - Migrated GitHub Pages deployment from the old project-site URL to the root user-site URL `https://tanvisha28.github.io/`:
   - Vite production base path is now `/`
   - the router and shared public-asset helpers continue to resolve from `import.meta.env.BASE_URL`

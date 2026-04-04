@@ -3,16 +3,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, Navigate, useLocation } from "react-router-dom";
 import { Canvas } from "@react-three/fiber";
 import { motion } from "motion/react";
 import { ArrowLeft, ExternalLink, Github, ChevronRight, CheckCircle2, AlertCircle, Layers, Workflow, Target, Zap } from "lucide-react";
-import { portfolioData } from "../data/portfolioData";
+import { defaultProfileSlug, isProfileSlug, portfolioProfiles } from "../data/portfolioData";
 import { SDEScene, DEScene, DSScene } from "../components/3d/ProjectScenes";
 import { SceneLights, AmbientParticles } from "../components/3d/Common";
 import { Layout, Footer } from "../components/Layout";
 import { useEffect, ReactNode } from "react";
 import { useSoundInteractions } from "../audio/useSoundInteractions";
+import { getProfileHashPath, getProfileHomePath, getProfileProjectPath } from "../utils/profileRoutes";
 
 function ScrollReveal({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (
@@ -29,22 +30,41 @@ function ScrollReveal({ children, className = "" }: { children: ReactNode; class
 }
 
 export default function ProjectDetail() {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const project = portfolioData.projects.find((p) => p.id === id);
+  const { id, profileSlug: profileSlugParam } = useParams();
+  const location = useLocation();
+  const hasValidProfileSlug = isProfileSlug(profileSlugParam);
+  const profileSlug = hasValidProfileSlug ? profileSlugParam : defaultProfileSlug;
+  const portfolioData = portfolioProfiles[profileSlug];
+  const projectIndex = portfolioData.projects.findIndex((entry) => entry.id === id);
+  const project = projectIndex >= 0 ? portfolioData.projects[projectIndex] : null;
   const { withClickSound, withHoverSound } = useSoundInteractions();
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    if (!project) navigate("/");
-  }, [project, navigate]);
+  }, [profileSlug, id]);
 
-  if (!project) return null;
+  if (!hasValidProfileSlug) {
+    return (
+      <Navigate
+        replace
+        to={{
+          pathname: getProfileHomePath(defaultProfileSlug),
+          search: location.search,
+          hash: location.hash,
+        }}
+      />
+    );
+  }
+
+  if (!project) {
+    return <Navigate replace to={getProfileHomePath(profileSlug)} />;
+  }
 
   const Scene = project.type === "AI" ? SDEScene : project.type === "DE" ? DEScene : DSScene;
   const accentColor = project.type === "AI" ? "#3b82f6" : project.type === "DE" ? "#f59e0b" : "#8b5cf6";
   const accentText = project.type === "AI" ? "text-blue-400" : project.type === "DE" ? "text-amber-400" : "text-purple-400";
   const accentBg = project.type === "AI" ? "bg-blue-500/10" : project.type === "DE" ? "bg-amber-500/10" : "bg-purple-500/10";
+  const nextProject = portfolioData.projects[(projectIndex + 1) % portfolioData.projects.length];
 
   return (
     <motion.div
@@ -53,7 +73,7 @@ export default function ProjectDetail() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Layout>
+      <Layout profileSlug={profileSlug} portfolioData={portfolioData}>
         {/* Project Hero */}
       <section className="relative h-[70vh] w-full flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
@@ -65,13 +85,13 @@ export default function ProjectDetail() {
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black" />
         </div>
 
-        <div className="relative z-10 text-center px-6 max-w-4xl mx-auto">
+        <div className="relative z-10 max-w-4xl mx-auto px-6 pt-20 text-center md:pt-24">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
             <Link
-              to="/#projects"
+              to={getProfileHashPath(profileSlug, "projects")}
               onClick={withClickSound()}
               className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-8 text-sm font-bold uppercase tracking-widest"
             >
@@ -82,7 +102,7 @@ export default function ProjectDetail() {
             </h1>
             <div className="flex flex-wrap justify-center gap-4 mb-8">
               <span className={`px-4 py-1 rounded-full border border-white/10 text-xs font-bold uppercase tracking-widest ${accentBg} ${accentText}`}>
-                {project.type}
+                {project.typeLabel}
               </span>
               <span className="px-4 py-1 rounded-full border border-white/10 text-xs font-bold uppercase tracking-widest bg-white/5 text-gray-400">
                 {project.domain}
@@ -272,15 +292,15 @@ export default function ProjectDetail() {
         <div className="max-w-4xl mx-auto text-center">
           <span className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4 block">Next Case Study</span>
           <Link 
-            to={`/project/${portfolioData.projects[(portfolioData.projects.findIndex(p => p.id === id) + 1) % portfolioData.projects.length].id}`}
+            to={getProfileProjectPath(profileSlug, nextProject.id)}
             onClick={withClickSound()}
             className="text-4xl md:text-6xl font-bold text-white hover:text-emerald-400 transition-colors tracking-tighter"
           >
-            {portfolioData.projects[(portfolioData.projects.findIndex(p => p.id === id) + 1) % portfolioData.projects.length].title}
+            {nextProject.title}
           </Link>
         </div>
       </section>
-      <Footer />
+      <Footer portfolioData={portfolioData} />
     </Layout>
     </motion.div>
   );

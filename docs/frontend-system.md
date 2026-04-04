@@ -70,7 +70,7 @@ Why this order matters:
 
 ## Practical Edit Boundaries
 
-- Changing `portfolioData` should usually be enough for copy, metrics, skills, experience, and case-study text.
+- Changing the active profile entry in `portfolioData` should usually be enough for copy, metrics, skills, experience, and case-study text.
 - Changing card appearance usually belongs in `HomeSections.tsx`.
 - Changing page-level spacing usually belongs in `Home.tsx` or `ProjectDetail.tsx`.
 - Changing scene geometry or scroll beat pacing belongs in `src/components/3d/*`.

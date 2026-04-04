@@ -25,7 +25,7 @@ Check in this order:
    - DOM fallback mode when canvas is disabled
    - `ScrollControls`
    - `<Scroll html>`
-3. Confirm `portfolioData` still has all fields referenced by the homepage.
+3. Confirm the active profile entry in `portfolioData.ts` still has all fields referenced by the homepage.
 4. If the navbar appears over a plain black background with no hero DOM content, inspect the `CanvasErrorBoundary`, `canCreateWebGLContext`, and `HomeScrollContent` path together.
 5. If the hero DOM content appears but the 3D layer does not, suspect a canvas-only error or a disabled WebGL path rather than missing route content.
 6. If some content appears but the scroll is too short, suspect `pages` measurement or a zero-height `containerRef`.
@@ -60,7 +60,7 @@ Check:
 
 1. [`src/pages/Home.tsx`](../src/pages/Home.tsx) still initializes the canvas scroll viewport once on a no-hash home entry instead of resetting it from multiple places.
 2. The inner viewport still resets to Drei's expected top offset (`scrollTop = 1`) rather than `0`.
-3. Direct hash entry such as `/#projects` still skips the hero reset and scrolls to the target section.
+3. Direct hash entry such as `/dataengineer#projects` still skips the hero reset and scrolls to the target section.
 4. [`src/index.css`](../src/index.css) does not apply `scroll-behavior: smooth` to every element, which can affect the hidden scroll container created by `ScrollControls`.
 5. The `<ScrollControls>` style in `Home.tsx` still forces `scrollBehavior: "auto"` on the hidden viewport.
 
@@ -94,7 +94,8 @@ Check:
 2. Navbar links still point to the right hash.
 3. `ScrollViewportBridge` is still capturing the correct scroll viewport element in canvas mode.
 4. `ScrollToTop.tsx` only resets on pathname change, while the home page itself handles hash scrolling.
-5. The route still lands on `/` before the hash-based scroll runs.
+5. The route still lands on the expected `/:profileSlug` homepage before the hash-based scroll runs.
+6. The active route should be `/:profileSlug#section`, not an unscoped hash like `/#projects`.
 
 ## Failure Mode: Sound Toggle Shows But Audio Never Starts
 
@@ -121,19 +122,21 @@ Check:
 2. Scene mapping in `ProjectDetail.tsx`
 3. Tone mapping in `HomeSections.tsx`
 4. Scene implementation in `ProjectScenes.tsx`
+5. The project lookup is happening inside the expected profile's `projects` array rather than another profile.
 
 ## Failure Mode: Build Or Typecheck Breaks After Content Edits
 
 Likely causes:
 
-- missing required fields in `portfolioData`
+- missing required fields in a profile entry inside `portfolioData`
 - changing `flow` to a non-string structure
 - introducing a new `type` value without updating unions
+- introducing a new profile slug or profile map entry without updating route handling
 
 Use `npm run lint` first. It is the fastest repo-native guardrail.
 
 ## Practical Debugging Heuristic
 
 - If the issue is visual but not 3D-specific, start in DOM files.
-- If the issue follows a route param or project type, start in `portfolioData`.
+- If the issue follows a route param, profile slug, or project type, start in `portfolioData`.
 - If the issue appears only while scrolling, inspect `Home.tsx` and `StoryScene.tsx` together.

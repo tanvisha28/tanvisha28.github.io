@@ -31,12 +31,12 @@ Use this before handing off a change, opening a PR, or merging any update that t
 - `npm run lint`
 - `npm run build`
 - `code_repo_update.md` reflects any repo-facing contract changes from the task
-- Home route loads and scrolls correctly
-- Edited `/project/:id` routes load correctly
+- Affected `/:profileSlug` home routes load and scroll correctly
+- Edited `/:profileSlug/project/:id` routes load correctly
 - Navbar links and back links behave correctly
 - No doc contradictions in touched contributor files
 
 ## Repo-Specific Gotchas
 
-- Content order in `portfolioData.projects` is a behavioral detail, not just content.
+- Content order in each profile's `portfolioData.projects` array is a behavioral detail, not just content.
 - A docs-only change can still be harmful if it tells future contributors to treat the homepage like a normal DOM page.

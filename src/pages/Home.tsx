@@ -6,13 +6,13 @@
 import { Canvas } from "@react-three/fiber";
 import { ScrollControls, Scroll, useScroll } from "@react-three/drei";
 import { ChevronDown, Mail, Linkedin, Github, MapPin, FileText } from "lucide-react";
-import { portfolioData } from "../data/portfolioData";
+import { defaultProfileSlug, isProfileSlug, portfolioProfiles, type PortfolioData } from "../data/portfolioData";
 import { defaultHomeSceneRanges, type HomeSceneRanges, type SectionRange } from "../data/homeSceneData";
 import { SceneLights } from "../components/3d/Common";
 import { StoryScene } from "../components/3d/StoryScene";
 import { Layout, Footer } from "../components/Layout";
 import { SkillsGrid, ExperienceTimeline, ProjectTree, EducationGrid } from "../components/HomeSections";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams, Navigate } from "react-router-dom";
 import { Component, useEffect, useMemo, useState, useRef, type ErrorInfo, type ReactNode, type RefObject } from "react";
 import { motion, useIsPresent, useMotionValue } from "motion/react";
 import { majorHomeSections } from "../audio/soundConfig";
@@ -20,6 +20,7 @@ import { useSound } from "../audio/useSound";
 import { useSoundInteractions, type SoundInteractionHandlers } from "../audio/useSoundInteractions";
 import { getEmailComposeUrl } from "../utils/contact";
 import { withBasePath } from "../utils/publicAsset";
+import { getProfileHomePath, getProfileProjectPath } from "../utils/profileRoutes";
 
 const HOME_SCROLL_SECTION_ORDER = ["hero", "about", "skills", "projects", "experience", "education", "contact", "footer"] as const;
 type HomeScrollSectionName = (typeof HOME_SCROLL_SECTION_ORDER)[number];
@@ -161,6 +162,7 @@ function AnimatedSectionIntro({
 
 function HomeScrollContent({
   canvasMode,
+  portfolioData,
   containerRef,
   heroSectionRef,
   heroPortraitRef,
@@ -172,6 +174,7 @@ function HomeScrollContent({
   withHoverSound,
 }: {
   canvasMode: boolean;
+  portfolioData: PortfolioData;
   containerRef: RefObject<HTMLDivElement | null>;
   heroSectionRef: RefObject<HTMLElement | null>;
   heroPortraitRef: RefObject<HTMLDivElement | null>;
@@ -278,10 +281,10 @@ function HomeScrollContent({
                 className="lg:pr-8"
               >
                 <span className="mb-4 block text-xs font-bold uppercase tracking-widest text-emerald-400">
-                  About Me
+                  {portfolioData.sectionCopy.about.eyebrow}
                 </span>
                 <h2 className="mb-6 max-w-4xl text-4xl font-bold tracking-tighter text-white md:text-5xl xl:text-[4.25rem] xl:leading-[0.94]">
-                  Building reliable data platforms from raw signals to usable decisions.
+                  {portfolioData.sectionCopy.about.title}
                 </h2>
                 <div className="max-w-3xl space-y-4 text-base leading-relaxed text-gray-400 md:text-lg">
                   {portfolioData.personal.about.map((paragraph) => (
@@ -300,7 +303,7 @@ function HomeScrollContent({
                 <div className="flex h-full flex-col gap-6 lg:justify-between">
                   <div>
                     <span className="block text-[10px] font-bold uppercase tracking-[0.26em] text-gray-500">
-                      Impact Snapshot
+                      {portfolioData.sectionCopy.about.impactLabel}
                     </span>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -321,7 +324,9 @@ function HomeScrollContent({
                   </div>
 
                   <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-5 shadow-[0_18px_50px_rgba(0,0,0,0.18)] backdrop-blur-md md:p-6">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-gray-500">Focus Areas</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.26em] text-gray-500">
+                      {portfolioData.sectionCopy.about.focusLabel}
+                    </p>
                     <div className="mt-4 flex flex-wrap gap-2.5">
                       {portfolioData.personal.focusAreas.map((area) => (
                         <span
@@ -350,13 +355,12 @@ function HomeScrollContent({
           >
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_58%)]" />
             <div className="relative text-center">
-              <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">Capabilities</span>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tighter mb-4">
-                Production data delivery across pipelines, platforms, and monitoring.
-              </h2>
+              <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">
+                {portfolioData.sectionCopy.skills.eyebrow}
+              </span>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tighter mb-4">{portfolioData.sectionCopy.skills.title}</h2>
               <p className="max-w-3xl mx-auto text-gray-300 text-base leading-relaxed md:text-lg">
-                Experience spanning ingestion, warehousing, orchestration, quality controls, and applied analytics,
-                with a clear focus on dependable data delivery rather than one-off prototypes.
+                {portfolioData.sectionCopy.skills.description}
               </p>
             </div>
           </AnimatedSectionIntro>
@@ -376,11 +380,10 @@ function HomeScrollContent({
           >
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.14),transparent_56%)]" />
             <div className="relative text-center">
-              <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">Case Studies</span>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tighter mb-5">Selected Work</h2>
+              <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">{portfolioData.sectionCopy.projects.eyebrow}</span>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tighter mb-5">{portfolioData.sectionCopy.projects.title}</h2>
               <p className="max-w-4xl mx-auto text-gray-300 text-base leading-relaxed md:text-lg">
-                Resume-backed work spanning market forecasting, manufacturing lakehouse delivery, and airline resilience monitoring.
-                Each case study focuses on the data pipeline, the system design, and the operational value it created.
+                {portfolioData.sectionCopy.projects.description}
               </p>
             </div>
           </AnimatedSectionIntro>
@@ -405,13 +408,10 @@ function HomeScrollContent({
           >
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_58%)]" />
             <div className="relative text-center">
-              <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">Journey</span>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tighter mb-4">
-                Experience shaped by shipped systems.
-              </h2>
+              <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">{portfolioData.sectionCopy.experience.eyebrow}</span>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tighter mb-4">{portfolioData.sectionCopy.experience.title}</h2>
               <p className="max-w-3xl mx-auto text-gray-300 text-base leading-relaxed md:text-lg">
-                Work across academic research, manufacturing analytics, and energy forecasting built a practical approach
-                to data delivery, monitoring, and dependable analytics infrastructure.
+                {portfolioData.sectionCopy.experience.description}
               </p>
             </div>
           </AnimatedSectionIntro>
@@ -431,13 +431,10 @@ function HomeScrollContent({
           <AnimatedSectionIntro className={`mb-12 max-w-5xl ${sectionIntroClassName}`} motionViewportRoot={motionViewportRoot}>
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(52,211,153,0.14),transparent_58%)]" />
             <div className="relative text-center">
-              <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">Education</span>
-              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tighter mb-4">
-                Academic work that sharpened the engineering foundation.
-              </h2>
+              <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">{portfolioData.sectionCopy.education.eyebrow}</span>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tighter mb-4">{portfolioData.sectionCopy.education.title}</h2>
               <p className="max-w-3xl mx-auto text-gray-300 text-base leading-relaxed md:text-lg">
-                Current graduate study in data science at Rutgers builds on an electronics engineering background,
-                reinforcing the statistical, database, and systems thinking behind the portfolio.
+                {portfolioData.sectionCopy.education.description}
               </p>
             </div>
           </AnimatedSectionIntro>
@@ -458,23 +455,24 @@ function HomeScrollContent({
             <div className="relative grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
               <div className="text-center lg:text-left">
                 <span className="mb-4 block text-xs font-bold uppercase tracking-widest text-emerald-400">
-                  Get in Touch
+                  {portfolioData.sectionCopy.contact.eyebrow}
                 </span>
                 <h2 className="mb-4 text-3xl font-bold tracking-tighter text-white md:text-5xl">
-                  Let&apos;s talk about the next system worth shipping.
+                  {portfolioData.sectionCopy.contact.title}
                 </h2>
                 <p className="max-w-2xl text-sm leading-relaxed text-gray-300 md:text-base">
-                  Open to data engineering, analytics platform, and applied machine learning opportunities where
-                  reliable pipelines, governed data, and measurable outcomes all matter.
+                  {portfolioData.sectionCopy.contact.description}
                 </p>
 
                 <div className="mt-6 flex flex-wrap justify-center gap-3 lg:justify-start">
-                  <span className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-gray-300">
-                    Data Engineering
-                  </span>
-                  <span className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-gray-300">
-                    Analytics Platforms
-                  </span>
+                  {portfolioData.sectionCopy.contact.chips.map((chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-full border border-white/10 bg-white/[0.03] px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-gray-300"
+                    >
+                      {chip}
+                    </span>
+                  ))}
                   <span className="rounded-full border border-emerald-400/18 bg-emerald-400/[0.04] px-3.5 py-2 text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-200">
                     {portfolioData.personal.location}
                   </span>
@@ -509,7 +507,7 @@ function HomeScrollContent({
               <div className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-5 text-left shadow-[0_18px_50px_rgba(0,0,0,0.22)] backdrop-blur-md md:p-6">
                 <div className="mb-5 border-b border-white/8 pb-4">
                   <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-gray-500">
-                    Best Way To Reach Me
+                    {portfolioData.sectionCopy.contact.reachLabel}
                   </p>
                   <a
                     href={getEmailComposeUrl(portfolioData.personal.email)}
@@ -572,7 +570,7 @@ function HomeScrollContent({
         data-home-scroll-section="footer"
         className="pointer-events-auto relative z-10 w-full bg-[linear-gradient(180deg,rgba(0,0,0,0)_0%,rgba(0,0,0,0.62)_28%,#000_100%)] pt-8 md:pt-10"
       >
-        <Footer />
+        <Footer portfolioData={portfolioData} />
       </section>
     </div>
   );
@@ -593,7 +591,12 @@ function ScrollViewportBridge({
 }
 
 export default function Home() {
-  const { hash, key: locationKey } = useLocation();
+  const location = useLocation();
+  const { hash, key: locationKey } = location;
+  const { profileSlug: profileSlugParam } = useParams();
+  const hasValidProfileSlug = isProfileSlug(profileSlugParam);
+  const profileSlug = hasValidProfileSlug ? profileSlugParam : defaultProfileSlug;
+  const portfolioData = portfolioProfiles[profileSlug];
   const navigate = useNavigate();
   const isPresent = useIsPresent();
   const { markSectionEntered, playCue, setHomeSoundscapeActive } = useSound();
@@ -1015,6 +1018,19 @@ export default function Home() {
     return () => observer.disconnect();
   }, [isCanvasEnabled, markSectionEntered, playCue, scrollViewportVersion]);
 
+  if (!hasValidProfileSlug) {
+    return (
+      <Navigate
+        replace
+        to={{
+          pathname: getProfileHomePath(defaultProfileSlug),
+          search: location.search,
+          hash: location.hash,
+        }}
+      />
+    );
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -1022,7 +1038,7 @@ export default function Home() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
-      <Layout>
+      <Layout profileSlug={profileSlug} portfolioData={portfolioData}>
         {isCanvasEnabled ? (
           <CanvasErrorBoundary onError={handleCanvasError}>
             <div className="fixed inset-0 z-0 bg-black">
@@ -1035,10 +1051,11 @@ export default function Home() {
                     <Scroll html style={{ width: "100%", position: "absolute", inset: 0, zIndex: 1 }}>
                       <HomeScrollContent
                         canvasMode
+                        portfolioData={portfolioData}
                         containerRef={containerRef}
                         heroSectionRef={heroSectionRef}
                         heroPortraitRef={heroPortraitRef}
-                        onProjectSelect={(projectId) => navigate(`/project/${projectId}`)}
+                        onProjectSelect={(projectId) => navigate(getProfileProjectPath(profileSlug, projectId))}
                         onScrollToSection={scrollToSection}
                         sectionIntroClassName={sectionIntroClassName}
                         motionViewportRoot={scrollViewportRef}
@@ -1055,10 +1072,11 @@ export default function Home() {
           <div className="relative z-0 bg-black">
             <HomeScrollContent
               canvasMode={false}
+              portfolioData={portfolioData}
               containerRef={containerRef}
               heroSectionRef={heroSectionRef}
               heroPortraitRef={heroPortraitRef}
-              onProjectSelect={(projectId) => navigate(`/project/${projectId}`)}
+              onProjectSelect={(projectId) => navigate(getProfileProjectPath(profileSlug, projectId))}
               onScrollToSection={scrollToSection}
               sectionIntroClassName={sectionIntroClassName}
               withClickSound={withClickSound}

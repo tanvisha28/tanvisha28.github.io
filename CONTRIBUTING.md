@@ -26,10 +26,10 @@ Keep changes fast, targeted, and safe without losing the repo's current dark 3D 
 
 If your change affects visible UI, also check:
 
-- homepage load
-- homepage scroll
-- hash navigation
-- affected project detail pages
+- affected `/:profileSlug` homepage load
+- affected `/:profileSlug` homepage scroll
+- profile-scoped hash navigation
+- affected `/:profileSlug/project/:id` pages
 - back/next navigation flows
 
 ## Docs To Keep In Sync
@@ -44,4 +44,3 @@ If your change affects visible UI, also check:
 - This repo has CI for typecheck and build only.
 - Visual regressions are still manual.
 - The homepage scroll system is the most fragile area. Use the repo playbooks instead of treating it like a standard landing page.
-
