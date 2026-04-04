@@ -97,6 +97,21 @@ Check:
 5. The route still lands on the expected `/:profileSlug` homepage before the hash-based scroll runs.
 6. The active route should be `/:profileSlug#section`, not an unscoped hash like `/#projects`.
 
+## Failure Mode: GitHub Pages Direct Routes Return 404
+
+Likely cause: the published `dist/` artifact is missing static route entry points for profile or project paths.
+
+Check:
+
+1. `npm run build:pages` still runs `scripts/build-pages.ts` after `vite build`.
+2. The built `dist/` directory contains:
+   - `dataengineer/index.html`
+   - `softwareengineer/index.html`
+   - at least one profile project path such as `dataengineer/project/lakehouse-platform/index.html`
+   - at least one legacy path such as `project/lakehouse-platform/index.html`
+3. `dist/404.html` still exists as the fallback entry.
+4. `.github/workflows/deploy.yml` still deploys `dist/` from `main`.
+
 ## Failure Mode: Sound Toggle Shows But Audio Never Starts
 
 Likely causes:

@@ -49,6 +49,7 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
   - project display labels and project card icons are now data-driven while 3D scene selection still depends on the existing `AI` / `DE` / `DS` visual types
 - Updated shared layout, homepage, and project detail navigation so hash links, resume links, back links, and next-project flows stay inside the active profile route.
 - Refreshed contributor docs to describe the new routing and data contract, including profile-specific resume assets and profile-scoped project IDs.
+- Updated `build:pages` so GitHub Pages now emits static `index.html` entry points for every profile homepage and every profile-scoped or legacy project path, keeping direct route requests on `200` responses instead of the generic `404.html` fallback.
 
 ### 2026-04-04
 

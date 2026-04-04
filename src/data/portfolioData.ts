@@ -106,7 +106,10 @@ export interface PortfolioData {
 export const profileSlugs: ProfileSlug[] = ["dataengineer", "softwareengineer", "datascientist", "datanalyst"];
 export const defaultProfileSlug: ProfileSlug = "dataengineer";
 
-const basePublicPath = import.meta.env.BASE_URL || "/";
+const basePublicPath =
+  typeof import.meta !== "undefined" && import.meta.env?.BASE_URL
+    ? import.meta.env.BASE_URL
+    : "/";
 
 function withPublicAsset(path: string) {
   const normalizedBase = basePublicPath.endsWith("/") ? basePublicPath : `${basePublicPath}/`;

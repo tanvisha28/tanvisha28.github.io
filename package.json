@@ -7,7 +7,7 @@
     "start": "vite --port=3000 --strictPort --host=0.0.0.0",
     "dev": "vite --port=3000 --strictPort --host=0.0.0.0",
     "build": "vite build",
-    "build:pages": "vite build && cp dist/index.html dist/404.html && touch dist/.nojekyll",
+    "build:pages": "vite build && tsx scripts/build-pages.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"

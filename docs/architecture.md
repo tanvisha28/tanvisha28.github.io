@@ -31,6 +31,14 @@
 - `/project/:id`
   - Redirects legacy project URLs to `/dataengineer/project/:id` when the project exists in the default profile.
 
+## GitHub Pages Artifact Shape
+
+- `npm run build:pages` builds the normal Vite bundle, then generates static route entry points inside `dist/` for:
+  - each profile homepage
+  - each `/:profileSlug/project/:id` route
+  - each legacy `/project/:id` route supported by the default profile
+- `dist/404.html` still exists as a fallback, but direct GitHub Pages hits should resolve through those generated route directories first.
+
 ## Homepage Architecture
 
 The homepage is the most fragile part of the repo because it mixes three systems at once:

@@ -15,7 +15,7 @@ Useful commands:
 - `npm run dev`: local development server on port `3000`
 - `npm run lint`: TypeScript typecheck
 - `npm run build`: production build
-- `npm run build:pages`: production build for GitHub Pages, including `404.html` and `.nojekyll`
+- `npm run build:pages`: production build for GitHub Pages, including static route entry points, `404.html`, and `.nojekyll`
 - `npm run preview`: preview the built app
 
 ## GitHub Pages Deployment
@@ -38,7 +38,7 @@ For GitHub Pages builds, use:
 1. `npm run lint`
 2. `npm run build:pages`
 
-`build:pages` also creates `dist/404.html` for SPA route refreshes on project detail pages and `dist/.nojekyll` for static hosting compatibility. The repo publishes through GitHub Actions from `main` using `.github/workflows/deploy.yml`.
+`build:pages` also creates `dist/404.html`, `dist/.nojekyll`, and static `index.html` entry points for every profile homepage plus every profile-scoped and legacy project route. That keeps direct GitHub Pages hits like `/dataengineer` and `/softwareengineer/project/lakehouse-platform` on a `200` path instead of relying only on the SPA `404` fallback. The repo publishes through GitHub Actions from `main` using `.github/workflows/deploy.yml`.
 
 ## Current Stack
 
