@@ -28,14 +28,24 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
   - `src/components/3d/StoryScene.tsx` combines the hero scene with `HomeLowerScene`.
   - `src/data/homeSceneData.ts` owns measured scene ranges, lower-scene geometry, and responsive tuning constants.
 - Audio layer:
-  - `src/audio/*` owns sound preference persistence, homepage soundscape state, cue timing, and interaction hooks.
-  - `src/components/SoundToggle.tsx` is exposed through the shared navbar.
+  - `src/audio/*` owns sound preference persistence, route-aware soundscape state, cue timing, session prompt dismissal, and interaction hooks.
+  - `src/components/SoundToggle.tsx` and `src/components/SoundPrompt.tsx` are exposed through the shared layout chrome.
 - Verification contract:
   - `npm run lint`
   - `npm run build`
   - Manual homepage and affected-route checks for any visual, routing, or 3D changes
 
 ## Recent Updates
+
+### 2026-04-04
+
+- Added a route-aware premium soundscape and the runtime audio asset contract:
+  - `src/audio/soundConfig.ts` now defines distinct home/detail ambient cues, case-study transition cues, `education` as a first-class major home section, and the required `public/audio/*` asset list
+  - `src/audio/SoundProvider.tsx` now owns sound prompt dismissal, route-aware soundscape mode (`home` / `detail` / `off`), mobile-safe cue scaling, and the activation-tone opt-in flow
+  - `src/audio/soundController.ts` now crossfades between home and detail ambience and ducks the active ambient bed under impact / case-study transition cues
+  - `src/App.tsx` now switches soundscape mode centrally by route kind, while `src/components/Layout.tsx` renders the shared `SoundPrompt` alongside the existing navbar sound toggle
+  - `src/pages/Home.tsx` and `src/pages/ProjectDetail.tsx` now fire the new section, education, contact, and case-study transition cues without changing routing or layout architecture
+  - `docs/architecture.md` and `docs/debugging-runbook.md` now document the new prompt/session-state contract and the exact `public/audio` runtime asset set
 
 ### 2026-04-04
 

@@ -30,6 +30,7 @@ import {
 } from "../components/3d/ProjectScenes";
 import { Footer, Layout } from "../components/Layout";
 import { defaultProfileSlug, isProfileSlug, portfolioProfiles, type ProfileSlug } from "../data/portfolioData";
+import { useSound } from "../audio/useSound";
 import { useSoundInteractions } from "../audio/useSoundInteractions";
 import { getProfileHashPath, getProfileHomePath, getProfileProjectPath } from "../utils/profileRoutes";
 import {
@@ -174,11 +175,14 @@ export default function ProjectDetail() {
   const theme = detailThemes[profileSlug];
   const Scene = theme.scene;
   const flowSteps = project ? project.flow.split(" -> ").map((step) => step.trim()).filter(Boolean) : [];
+  const { playCue } = useSound();
   const { withClickSound, withHoverSound } = useSoundInteractions();
   const caseStudyEntryState = getCaseStudyEntryState(location.state);
   const enteredFromHome = caseStudyEntryState?.profileSlug === profileSlug && caseStudyEntryState.previousRouteKind === "home";
 
   const backToProjects = () => {
+    playCue("caseStudyReturn");
+
     if (enteredFromHome) {
       navigate(getProfileHashPath(profileSlug, "projects"), {
         replace: true,
@@ -543,7 +547,7 @@ export default function ProjectDetail() {
               <Link
                 to={getProfileProjectPath(profileSlug, nextProject.id)}
                 state={nextProjectState}
-                onClick={withClickSound()}
+                onClick={withClickSound(() => playCue("caseStudyOpen"))}
                 onMouseEnter={withHoverSound(`detail-next-${nextProject.id}`)}
                 onFocus={withHoverSound(`detail-next-${nextProject.id}`)}
                 className="mt-4 inline-block text-4xl font-bold tracking-[-0.04em] text-white transition-colors hover:text-white/80 md:text-6xl"

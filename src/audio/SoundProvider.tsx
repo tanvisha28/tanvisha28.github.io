@@ -8,7 +8,15 @@ import {
   type ReactNode,
 } from "react";
 import { SoundController } from "./soundController";
-import { SOUND_STORAGE_KEY, soundRegistry, type MajorHomeSection, type SoundCue } from "./soundConfig";
+import {
+  SOUND_PROMPT_SESSION_KEY,
+  SOUND_STORAGE_KEY,
+  soundRegistry,
+  soundscapeAmbientCueByMode,
+  type MajorHomeSection,
+  type SoundCue,
+  type SoundscapeMode,
+} from "./soundConfig";
 
 type PlayCueOptions = {
   automatic?: boolean;
@@ -19,11 +27,14 @@ export interface SoundContextValue {
   enabled: boolean;
   ready: boolean;
   reducedMotion: boolean;
+  showSoundPrompt: boolean;
   toggleSound: () => Promise<void>;
-  playCue: (cue: Exclude<SoundCue, "ambient">, options?: PlayCueOptions) => void;
+  enableSound: () => Promise<void>;
+  dismissSoundPrompt: () => void;
+  playCue: (cue: Exclude<SoundCue, "ambientHome" | "ambientDetail">, options?: PlayCueOptions) => void;
   playClick: () => void;
   playHover: () => void;
-  setHomeSoundscapeActive: (active: boolean) => void;
+  setSoundscapeMode: (mode: SoundscapeMode) => void;
   markSectionEntered: (section: MajorHomeSection) => void;
 }
 
@@ -43,6 +54,20 @@ function useReducedMotionPreference() {
   return reducedMotion;
 }
 
+function useCoarsePointerPreference() {
+  const [coarsePointer, setCoarsePointer] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(pointer: coarse)");
+    const sync = () => setCoarsePointer(mediaQuery.matches);
+    sync();
+    mediaQuery.addEventListener("change", sync);
+    return () => mediaQuery.removeEventListener("change", sync);
+  }, []);
+
+  return coarsePointer;
+}
+
 function readStoredPreference() {
   if (typeof window === "undefined") {
     return false;
@@ -51,17 +76,36 @@ function readStoredPreference() {
   return window.localStorage.getItem(SOUND_STORAGE_KEY) === "true";
 }
 
+function readPromptDismissed() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.sessionStorage.getItem(SOUND_PROMPT_SESSION_KEY) === "true";
+}
+
+function writePromptDismissed(value: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.setItem(SOUND_PROMPT_SESSION_KEY, String(value));
+}
+
 export function SoundProvider({ children }: { children: ReactNode }) {
   const reducedMotion = useReducedMotionPreference();
+  const coarsePointer = useCoarsePointerPreference();
   const controllerRef = useRef<SoundController | null>(null);
   const cueLastPlayedAtRef = useRef<Partial<Record<SoundCue, number>>>({});
   const enteredSectionsRef = useRef<Set<MajorHomeSection>>(new Set());
   const enabledRef = useRef(readStoredPreference());
   const reducedMotionRef = useRef(reducedMotion);
+  const coarsePointerRef = useRef(coarsePointer);
   const userActivationRef = useRef(false);
-  const homeSoundscapeActiveRef = useRef(false);
+  const soundscapeModeRef = useRef<SoundscapeMode>("off");
   const [enabled, setEnabled] = useState(enabledRef.current);
   const [ready, setReady] = useState(false);
+  const [promptDismissed, setPromptDismissed] = useState(readPromptDismissed());
 
   const ensureController = useCallback(() => {
     if (!controllerRef.current) {
@@ -71,8 +115,19 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     return controllerRef.current;
   }, []);
 
+  const resolveCueVolume = useCallback(
+    (cue: SoundCue, baseVolume = soundRegistry[cue].volume) => {
+      const coarsePointerMultiplier = coarsePointerRef.current
+        ? soundRegistry[cue].mobileVolumeMultiplier ?? 0.88
+        : 1;
+
+      return baseVolume * coarsePointerMultiplier;
+    },
+    []
+  );
+
   const shouldRunAmbient = useCallback(() => {
-    return enabledRef.current && userActivationRef.current && homeSoundscapeActiveRef.current && !document.hidden;
+    return enabledRef.current && userActivationRef.current && soundscapeModeRef.current !== "off" && !document.hidden;
   }, []);
 
   const syncAmbientState = useCallback(async () => {
@@ -82,35 +137,38 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     }
 
     if (shouldRunAmbient()) {
-      await controller.startAmbient();
+      const cue = soundscapeAmbientCueByMode[soundscapeModeRef.current as Exclude<SoundscapeMode, "off">];
+      await controller.startAmbient(cue, resolveCueVolume(cue));
       return;
     }
 
-    const shouldPause = homeSoundscapeActiveRef.current && document.hidden;
+    const shouldPause = soundscapeModeRef.current !== "off" && document.hidden;
     await controller.fadeOutAmbient(shouldPause);
-  }, [shouldRunAmbient]);
+  }, [resolveCueVolume, shouldRunAmbient]);
 
   const initializeAudio = useCallback(
-    async ({ playActivationHum }: { playActivationHum: boolean }) => {
+    async ({ playActivationTone }: { playActivationTone: boolean }) => {
       userActivationRef.current = true;
       const controller = ensureController();
       await controller.ensureReady();
       setReady(true);
 
-      if (playActivationHum) {
-        await controller.playTransient("heroHum");
+      if (playActivationTone) {
+        await controller.playTransient("activationTone", resolveCueVolume("activationTone"));
       }
 
-      if (shouldRunAmbient()) {
-        await controller.startAmbient();
-      }
+      await syncAmbientState();
     },
-    [ensureController, shouldRunAmbient]
+    [ensureController, resolveCueVolume, syncAmbientState]
   );
 
   useEffect(() => {
     reducedMotionRef.current = reducedMotion;
   }, [reducedMotion]);
+
+  useEffect(() => {
+    coarsePointerRef.current = coarsePointer;
+  }, [coarsePointer]);
 
   useEffect(() => {
     enabledRef.current = enabled;
@@ -122,11 +180,10 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Restored sound preferences still wait for a user gesture before playback.
     const activate = () => {
       window.removeEventListener("pointerdown", activate, true);
       window.removeEventListener("keydown", activate, true);
-      void initializeAudio({ playActivationHum: false });
+      void initializeAudio({ playActivationTone: false });
     };
 
     window.addEventListener("pointerdown", activate, true);
@@ -147,8 +204,13 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [syncAmbientState]);
 
+  const dismissSoundPrompt = useCallback(() => {
+    setPromptDismissed(true);
+    writePromptDismissed(true);
+  }, []);
+
   const playCue = useCallback(
-    (cue: Exclude<SoundCue, "ambient">, options?: PlayCueOptions) => {
+    (cue: Exclude<SoundCue, "ambientHome" | "ambientDetail">, options?: PlayCueOptions) => {
       if (!enabledRef.current || !userActivationRef.current) {
         return;
       }
@@ -166,9 +228,9 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       }
 
       cueLastPlayedAtRef.current[cue] = now;
-      void ensureController().playTransient(cue, options?.volume ?? soundRegistry[cue].volume);
+      void ensureController().playTransient(cue, resolveCueVolume(cue, options?.volume ?? soundRegistry[cue].volume));
     },
-    [ensureController]
+    [ensureController, resolveCueVolume]
   );
 
   const playClick = useCallback(() => {
@@ -179,7 +241,22 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     playCue("uiHover");
   }, [playCue]);
 
+  const enableSound = useCallback(async () => {
+    dismissSoundPrompt();
+
+    if (enabledRef.current) {
+      await initializeAudio({ playActivationTone: true });
+      return;
+    }
+
+    enabledRef.current = true;
+    setEnabled(true);
+    await initializeAudio({ playActivationTone: true });
+  }, [dismissSoundPrompt, initializeAudio]);
+
   const toggleSound = useCallback(async () => {
+    dismissSoundPrompt();
+
     if (enabledRef.current) {
       enabledRef.current = false;
       setEnabled(false);
@@ -195,16 +272,15 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    enabledRef.current = true;
-    setEnabled(true);
-    await initializeAudio({ playActivationHum: true });
-  }, [initializeAudio]);
+    await enableSound();
+  }, [dismissSoundPrompt, enableSound]);
 
-  const setHomeSoundscapeActive = useCallback(
-    (active: boolean) => {
-      homeSoundscapeActiveRef.current = active;
+  const setSoundscapeMode = useCallback(
+    (mode: SoundscapeMode) => {
+      const previousMode = soundscapeModeRef.current;
+      soundscapeModeRef.current = mode;
 
-      if (active) {
+      if (mode === "home" && previousMode !== "home") {
         enteredSectionsRef.current.clear();
       }
 
@@ -224,7 +300,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       }
 
       enteredSectionsRef.current.add(section);
-      playCue("choirHit", { automatic: true, volume: soundRegistry.choirHit.volume });
+      playCue("sectionImpact", { automatic: true });
     },
     [playCue]
   );
@@ -240,14 +316,30 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       enabled,
       ready,
       reducedMotion,
+      showSoundPrompt: !enabled && !promptDismissed,
       toggleSound,
+      enableSound,
+      dismissSoundPrompt,
       playCue,
       playClick,
       playHover,
-      setHomeSoundscapeActive,
+      setSoundscapeMode,
       markSectionEntered,
     }),
-    [enabled, markSectionEntered, playClick, playCue, playHover, ready, reducedMotion, setHomeSoundscapeActive, toggleSound]
+    [
+      dismissSoundPrompt,
+      enableSound,
+      enabled,
+      markSectionEntered,
+      playClick,
+      playCue,
+      playHover,
+      promptDismissed,
+      ready,
+      reducedMotion,
+      setSoundscapeMode,
+      toggleSound,
+    ]
   );
 
   return <SoundContext.Provider value={value}>{children}</SoundContext.Provider>;

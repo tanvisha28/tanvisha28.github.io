@@ -11,6 +11,7 @@ import type { PortfolioData, ProfileSlug } from "../data/portfolioData";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { SoundToggle } from "./SoundToggle";
+import { SoundPrompt } from "./SoundPrompt";
 import { useSoundInteractions } from "../audio/useSoundInteractions";
 import { getEmailComposeUrl } from "../utils/contact";
 import { getProfileHashPath, getProfileHomePath } from "../utils/profileRoutes";
@@ -283,6 +284,7 @@ export function Layout({
   return (
     <div className="min-h-screen bg-black text-white selection:bg-emerald-500 selection:text-white font-sans">
       <Navbar profileSlug={profileSlug} portfolioData={portfolioData} />
+      <SoundPrompt />
       <main>{children}</main>
     </div>
   );

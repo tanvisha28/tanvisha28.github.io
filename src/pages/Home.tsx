@@ -485,7 +485,11 @@ function HomeScrollContent({
       <section id="education" data-home-scroll-section="education" className="px-6 py-16 md:py-20">
         <div className="pointer-events-auto max-w-7xl mx-auto">
           <SectionNavAnchor sectionId="education" />
-          <AnimatedSectionIntro className={`mb-12 max-w-5xl ${sectionIntroClassName}`} motionViewportRoot={motionViewportRoot}>
+          <AnimatedSectionIntro
+            className={`mb-12 max-w-5xl ${sectionIntroClassName}`}
+            soundRevealId="education-intro"
+            motionViewportRoot={motionViewportRoot}
+          >
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(52,211,153,0.14),transparent_58%)]" />
             <div className="relative text-center">
               <span className="text-emerald-400 text-xs font-bold uppercase tracking-widest mb-4 block">{portfolioData.sectionCopy.education.eyebrow}</span>
@@ -508,7 +512,11 @@ function HomeScrollContent({
         <div aria-hidden className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_72%_34%,rgba(16,185,129,0.14),transparent_40%)]" />
         <div className="pointer-events-auto relative z-10 max-w-5xl mx-auto">
           <SectionNavAnchor sectionId="contact" />
-          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/[0.58] px-6 py-8 shadow-[0_0_80px_rgba(0,0,0,0.34)] backdrop-blur-xl md:px-10 md:py-10">
+          <div
+            data-sound-reveal="sectionSweep"
+            data-sound-reveal-id="contact-panel"
+            className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/[0.58] px-6 py-8 shadow-[0_0_80px_rgba(0,0,0,0.34)] backdrop-blur-xl md:px-10 md:py-10"
+          >
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_56%)]" />
             <div className="relative grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
               <div className="text-center lg:text-left">
@@ -658,7 +666,7 @@ export default function Home() {
   const portfolioData = portfolioProfiles[profileSlug];
   const navigate = useNavigate();
   const isPresent = useIsPresent();
-  const { markSectionEntered, playCue, setHomeSoundscapeActive } = useSound();
+  const { markSectionEntered, playCue } = useSound();
   const { withClickSound, withHoverSound } = useSoundInteractions();
   const [isCanvasEnabled, setIsCanvasEnabled] = useState(() => canCreateWebGLContext());
   const [pages, setPages] = useState(1);
@@ -918,11 +926,6 @@ export default function Home() {
       setScrollViewportVersion((value) => value + 1);
     }
   };
-
-  useEffect(() => {
-    setHomeSoundscapeActive(true);
-    return () => setHomeSoundscapeActive(false);
-  }, [setHomeSoundscapeActive]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("scrollRestoration" in window.history)) {
@@ -1239,6 +1242,7 @@ export default function Home() {
       requestedAt: Date.now(),
     });
 
+    playCue("caseStudyOpen");
     navigate(getProfileProjectPath(profileSlug, projectId), {
       state: createCaseStudyEntryState({
         profileSlug,
@@ -1462,6 +1466,7 @@ export default function Home() {
           if (
             sectionName === "projects" ||
             sectionName === "experience" ||
+            sectionName === "education" ||
             sectionName === "contact"
           ) {
             markSectionEntered(sectionName);

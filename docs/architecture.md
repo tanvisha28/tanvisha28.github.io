@@ -6,6 +6,7 @@
 - Router shell and global providers: [`src/App.tsx`](../src/App.tsx)
 - Home/detail scroll snapshot helpers: [`src/utils/homeScrollState.ts`](../src/utils/homeScrollState.ts)
 - Shared layout/nav/footer: [`src/components/Layout.tsx`](../src/components/Layout.tsx)
+- Shared first-load sound prompt: [`src/components/SoundPrompt.tsx`](../src/components/SoundPrompt.tsx)
 - Shared sound toggle: [`src/components/SoundToggle.tsx`](../src/components/SoundToggle.tsx)
 - Homepage route: [`src/pages/Home.tsx`](../src/pages/Home.tsx)
 - Project detail route: [`src/pages/ProjectDetail.tsx`](../src/pages/ProjectDetail.tsx)
@@ -52,7 +53,7 @@ The homepage is the most fragile part of the repo because it mixes three systems
 
 - `App` wraps the router in `SoundProvider`, so sound state is available to both route-level pages and shared layout chrome.
 - `App` also owns the route-shell transition veil. Home/detail route changes animate through one fixed overlay rather than each page independently fading itself.
-- `Layout` renders the navbar, sound toggle, and route wrapper using the active profile's shared copy and links.
+- `Layout` renders the navbar, sound toggle, sound prompt, and route wrapper using the active profile's shared copy and links.
 - `Layout` is restore-aware on detail routes: the logo plus `Home` and `Projects` links can return to the last valid scroll snapshot on the active profile homepage.
 - `Home` gates canvas rendering through `canCreateWebGLContext` plus `CanvasErrorBoundary`.
 - `ScrollViewportBridge` captures Drei's scroll viewport so the page can drive hash navigation, measurement, and motion viewport roots from the same element.
@@ -99,8 +100,19 @@ The homepage is the most fragile part of the repo because it mixes three systems
 - Each active profile's `education` array is a visible homepage section, not just stored background data.
 - Shared nav, footer, resume links, and hash routes stay scoped to the active `profileSlug`.
 - `homeSceneData.ts` drives the lower homepage scene geometry and tuning separately from copy/content.
-- `SoundProvider` owns persisted sound preference, user-activation gating, homepage soundscape state, and visibility handling.
+- `SoundProvider` owns persisted sound preference, the session-scoped prompt dismissal, user-activation gating, route-aware soundscape mode (`home` / `detail` / `off`), and visibility handling.
+- `App.tsx` maps route kind to the active soundscape mode, so homepage ambience and detail-page ambience switch centrally instead of each page owning ambient start/stop effects.
 - `useSoundInteractions` injects click and hover cues into shared UI and homepage interactions.
+- `public/audio` is now a required runtime contract:
+  - `ambient-home-loop.wav`
+  - `ambient-detail-loop.wav`
+  - `activation-tone.m4a`
+  - `ui-click.m4a`
+  - `ui-hover.m4a`
+  - `section-sweep.m4a`
+  - `section-impact.m4a`
+  - `case-study-open.m4a`
+  - `case-study-return.m4a`
 - There is no backend request path in the current UI.
 - AI Studio remnants still exist:
   - `metadata.json`

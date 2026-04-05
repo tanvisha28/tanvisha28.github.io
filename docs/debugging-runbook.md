@@ -139,15 +139,26 @@ Likely causes:
 - missing files in `public/audio/`
 - `SoundProvider` no longer wrapping the app
 - no user-gesture activation
-- stored preference or reduced-motion gating not behaving as expected
+- stored preference, prompt-dismissal session state, or reduced-motion gating not behaving as expected
+- the active route no longer maps to the correct soundscape mode (`home` vs `detail`)
 
 Check:
 
 1. [`src/App.tsx`](../src/App.tsx) still wraps the router in `SoundProvider`.
-2. [`src/components/SoundToggle.tsx`](../src/components/SoundToggle.tsx) still calls `toggleSound`.
-3. The expected audio files still exist in `public/audio/`.
-4. `SoundProvider` still waits for user activation before playback and still persists the opt-in state through `SOUND_STORAGE_KEY`.
-5. Automatic section cues are not being mistaken for a full audio outage when reduced motion is enabled.
+2. [`src/components/SoundToggle.tsx`](../src/components/SoundToggle.tsx) still calls `toggleSound`, and [`src/components/SoundPrompt.tsx`](../src/components/SoundPrompt.tsx) still calls `enableSound` / `dismissSoundPrompt`.
+3. The expected audio files still exist in `public/audio/`:
+   - `ambient-home-loop.wav`
+   - `ambient-detail-loop.wav`
+   - `activation-tone.m4a`
+   - `ui-click.m4a`
+   - `ui-hover.m4a`
+   - `section-sweep.m4a`
+   - `section-impact.m4a`
+   - `case-study-open.m4a`
+   - `case-study-return.m4a`
+4. `SoundProvider` still waits for user activation before playback, persists opt-in through `SOUND_STORAGE_KEY`, and stores session-only prompt dismissal through `SOUND_PROMPT_SESSION_KEY`.
+5. `src/App.tsx` should still map home routes to the home ambient bed and detail routes to the detail ambient bed.
+6. Automatic section cues are not being mistaken for a full audio outage when reduced motion is enabled.
 
 ## Failure Mode: Project Detail Shows The Wrong Scene Or Accent
 
