@@ -30,8 +30,6 @@ import {
 } from "../components/3d/ProjectScenes";
 import { Footer, Layout } from "../components/Layout";
 import { defaultProfileSlug, isProfileSlug, portfolioProfiles, type ProfileSlug } from "../data/portfolioData";
-import { useSound } from "../audio/useSound";
-import { useSoundInteractions } from "../audio/useSoundInteractions";
 import { getProfileHashPath, getProfileHomePath, getProfileProjectPath } from "../utils/profileRoutes";
 import {
   createHomeRestoreState,
@@ -175,14 +173,10 @@ export default function ProjectDetail() {
   const theme = detailThemes[profileSlug];
   const Scene = theme.scene;
   const flowSteps = project ? project.flow.split(" -> ").map((step) => step.trim()).filter(Boolean) : [];
-  const { playCue } = useSound();
-  const { withClickSound, withHoverSound } = useSoundInteractions();
   const caseStudyEntryState = getCaseStudyEntryState(location.state);
   const enteredFromHome = caseStudyEntryState?.profileSlug === profileSlug && caseStudyEntryState.previousRouteKind === "home";
 
   const backToProjects = () => {
-    playCue("caseStudyReturn");
-
     if (enteredFromHome) {
       navigate(getProfileHashPath(profileSlug, "projects"), {
         replace: true,
@@ -260,9 +254,7 @@ export default function ProjectDetail() {
           <div className="relative z-10 mx-auto flex min-h-[88vh] max-w-7xl flex-col justify-end px-6 pb-14 pt-32 md:pb-16 xl:pb-18">
             <button
               type="button"
-              onClick={withClickSound(backToProjects)}
-              onMouseEnter={withHoverSound(`detail-back-${project.id}`)}
-              onFocus={withHoverSound(`detail-back-${project.id}`)}
+              onClick={backToProjects}
               className="mb-8 inline-flex items-center text-sm font-bold uppercase tracking-[0.24em] text-gray-400 transition-colors hover:text-white"
             >
               <ArrowLeft size={16} className="mr-2" /> Back to Projects
@@ -547,9 +539,6 @@ export default function ProjectDetail() {
               <Link
                 to={getProfileProjectPath(profileSlug, nextProject.id)}
                 state={nextProjectState}
-                onClick={withClickSound(() => playCue("caseStudyOpen"))}
-                onMouseEnter={withHoverSound(`detail-next-${nextProject.id}`)}
-                onFocus={withHoverSound(`detail-next-${nextProject.id}`)}
                 className="mt-4 inline-block text-4xl font-bold tracking-[-0.04em] text-white transition-colors hover:text-white/80 md:text-6xl"
               >
                 {nextProject.title}
@@ -564,18 +553,12 @@ export default function ProjectDetail() {
                 href={portfolioData.personal.resume}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={withClickSound()}
-                onMouseEnter={withHoverSound(`detail-resume-${project.id}`)}
-                onFocus={withHoverSound(`detail-resume-${project.id}`)}
                 className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white px-6 py-3 text-sm font-bold uppercase tracking-[0.22em] text-black transition-all hover:scale-[1.01] hover:bg-white/90"
               >
                 <FileText size={16} className="mr-2" /> Resume
               </a>
               <Link
                 to={getProfileHashPath(profileSlug, "contact")}
-                onClick={withClickSound()}
-                onMouseEnter={withHoverSound(`detail-contact-${project.id}`)}
-                onFocus={withHoverSound(`detail-contact-${project.id}`)}
                 className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-bold uppercase tracking-[0.22em] text-white transition-all hover:scale-[1.01] hover:bg-white/10"
               >
                 Get In Touch <ArrowRight size={16} className="ml-2" />

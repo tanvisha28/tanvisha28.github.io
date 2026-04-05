@@ -21,7 +21,6 @@ import { Project, Experience, SkillGroup, Education } from "../data/portfolioDat
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import type { ComponentType, RefObject } from "react";
-import type { SoundInteractionHandlers } from "../audio/useSoundInteractions";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -201,25 +200,15 @@ export function ProjectTree({
   projects,
   onProjectSelect,
   restoredProjectId,
-  revealSoundId,
   viewportRoot,
-  withClickSound,
-  withHoverSound,
 }: {
   projects: Project[];
   onProjectSelect: (projectId: string) => void;
   restoredProjectId?: string | null;
-  revealSoundId?: string;
   viewportRoot?: RefObject<Element | null>;
-  withClickSound: SoundInteractionHandlers["withClickSound"];
-  withHoverSound: SoundInteractionHandlers["withHoverSound"];
 }) {
   return (
-    <div
-      className="relative mx-auto w-full max-w-6xl"
-      data-sound-reveal={revealSoundId ? "sectionSweep" : undefined}
-      data-sound-reveal-id={revealSoundId}
-    >
+    <div className="relative mx-auto w-full max-w-6xl">
       <div className="absolute left-5 top-0 h-full w-px bg-white/10 md:left-1/2 md:-translate-x-1/2" />
 
       <div className="space-y-6 md:space-y-8">
@@ -315,9 +304,7 @@ export function ProjectTree({
 
                   <button
                     type="button"
-                    onClick={withClickSound(() => onProjectSelect(project.id))}
-                    onMouseEnter={withHoverSound(`project-cta-${project.id}`)}
-                    onFocus={withHoverSound(`project-cta-${project.id}`)}
+                    onClick={() => onProjectSelect(project.id)}
                     className="relative inline-flex items-center rounded-full bg-white px-6 py-3 text-xs font-bold uppercase tracking-widest text-black transition-all hover:bg-emerald-500 hover:text-white hover:scale-105 active:scale-95"
                   >
                     View Case Study <ArrowRight size={16} className="ml-2" />
@@ -351,19 +338,13 @@ export function ProjectTree({
 
 export function ExperienceTimeline({
   experiences,
-  revealSoundId,
   viewportRoot,
 }: {
   experiences: Experience[];
-  revealSoundId?: string;
   viewportRoot?: RefObject<Element | null>;
 }) {
   return (
-    <div
-      className="relative space-y-8 before:absolute before:left-5 before:top-0 before:h-full before:w-px before:bg-white/10 md:space-y-10 md:before:left-1/2 md:before:-translate-x-1/2"
-      data-sound-reveal={revealSoundId ? "sectionSweep" : undefined}
-      data-sound-reveal-id={revealSoundId}
-    >
+    <div className="relative space-y-8 before:absolute before:left-5 before:top-0 before:h-full before:w-px before:bg-white/10 md:space-y-10 md:before:left-1/2 md:before:-translate-x-1/2">
       {experiences.map((exp, idx) => (
         <motion.div
           key={exp.company + idx}

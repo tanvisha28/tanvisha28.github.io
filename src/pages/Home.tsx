@@ -15,18 +15,6 @@ import { SkillsGrid, ExperienceTimeline, ProjectTree, EducationGrid } from "../c
 import { useLocation, useNavigate, useNavigationType, useParams, Navigate } from "react-router-dom";
 import { Component, useEffect, useMemo, useState, useRef, type ErrorInfo, type ReactNode, type RefObject } from "react";
 import { motion, useIsPresent, useMotionValue } from "motion/react";
-import {
-  homeSoundZoneBySection,
-  homeSoundZones,
-  homeZoneArrivalDelayMs,
-  homeZoneChangeCooldownMs,
-  homeZoneChangeHoldMs,
-  homeZoneFocusLineRatio,
-  type HomeScrollSectionForSound,
-  type HomeSoundZone,
-} from "../audio/soundConfig";
-import { useSound } from "../audio/useSound";
-import { useSoundInteractions, type SoundInteractionHandlers } from "../audio/useSoundInteractions";
 import { getEmailComposeUrl } from "../utils/contact";
 import { withBasePath } from "../utils/publicAsset";
 import { getProfileHomePath, getProfileProjectPath } from "../utils/profileRoutes";
@@ -48,7 +36,6 @@ type HomeHashSectionId = (typeof HOME_HASH_SECTION_IDS)[number];
 const HOME_SCROLL_SECTION_SELECTOR = ":scope > [data-home-scroll-section]";
 const HOME_NAV_ANCHOR_BUFFER_PX = 18;
 export const HOME_NAV_SCROLL_REQUEST_EVENT = "portfolio-home-nav-request";
-const HOME_SOUND_ZONE_INDEX = Object.fromEntries(homeSoundZones.map((zone, index) => [zone, index])) as Record<HomeSoundZone, number>;
 
 function isHomeHashSectionId(value: string): value is HomeHashSectionId {
   return HOME_HASH_SECTION_IDS.includes(value as HomeHashSectionId);
@@ -198,12 +185,10 @@ class CanvasErrorBoundary extends Component<CanvasErrorBoundaryProps, CanvasErro
 function AnimatedSectionIntro({
   children,
   className,
-  soundRevealId,
   motionViewportRoot,
 }: {
   children: ReactNode;
   className: string;
-  soundRevealId?: string;
   motionViewportRoot?: RefObject<Element | null>;
 }) {
   return (
@@ -213,8 +198,6 @@ function AnimatedSectionIntro({
       viewport={motionViewportRoot ? { once: true, amount: 0.3, root: motionViewportRoot } : { once: true, amount: 0.3 }}
       transition={{ duration: 0.7, ease: [0.21, 0.47, 0.32, 0.98] }}
       className={className}
-      data-sound-reveal={soundRevealId ? "sectionSweep" : undefined}
-      data-sound-reveal-id={soundRevealId}
     >
       {children}
     </motion.div>
@@ -232,8 +215,6 @@ function HomeScrollContent({
   restoredProjectId,
   sectionIntroClassName,
   motionViewportRoot,
-  withClickSound,
-  withHoverSound,
 }: {
   canvasMode: boolean;
   portfolioData: PortfolioData;
@@ -245,8 +226,6 @@ function HomeScrollContent({
   restoredProjectId?: string | null;
   sectionIntroClassName: string;
   motionViewportRoot?: RefObject<Element | null>;
-  withClickSound: SoundInteractionHandlers["withClickSound"];
-  withHoverSound: SoundInteractionHandlers["withHoverSound"];
 }) {
   return (
     <div
@@ -305,18 +284,14 @@ function HomeScrollContent({
           <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
             <button
               type="button"
-              onClick={withClickSound(() => onScrollToSection("projects"))}
-              onMouseEnter={withHoverSound("hero-projects")}
-              onFocus={withHoverSound("hero-projects")}
+              onClick={() => onScrollToSection("projects")}
               className="rounded-full bg-white px-6 py-3 text-[13px] font-bold uppercase tracking-[0.16em] text-black transition-all hover:bg-emerald-500 hover:text-white md:px-7 md:py-3.5 md:text-sm md:tracking-widest"
             >
               View Selected Work
             </button>
             <button
               type="button"
-              onClick={withClickSound(() => onScrollToSection("contact"))}
-              onMouseEnter={withHoverSound("hero-contact")}
-              onFocus={withHoverSound("hero-contact")}
+              onClick={() => onScrollToSection("contact")}
               className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-6 py-3 text-[13px] font-bold uppercase tracking-[0.16em] text-white transition-all hover:border-emerald-400/40 hover:bg-white/10 md:px-7 md:py-3.5 md:text-sm md:tracking-widest"
             >
               <Mail size={16} className="mr-2" /> Let&apos;s Talk
@@ -413,7 +388,6 @@ function HomeScrollContent({
         <div className="pointer-events-auto max-w-7xl mx-auto">
           <AnimatedSectionIntro
             className={`mb-10 max-w-5xl ${sectionIntroClassName}`}
-            soundRevealId="skills-intro"
             motionViewportRoot={motionViewportRoot}
           >
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.18),transparent_58%)]" />
@@ -439,7 +413,6 @@ function HomeScrollContent({
           <SectionNavAnchor sectionId="projects" />
           <AnimatedSectionIntro
             className={`mb-14 max-w-5xl ${sectionIntroClassName}`}
-            soundRevealId="projects-intro"
             motionViewportRoot={motionViewportRoot}
           >
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.14),transparent_56%)]" />
@@ -455,10 +428,7 @@ function HomeScrollContent({
             projects={portfolioData.projects}
             onProjectSelect={onProjectSelect}
             restoredProjectId={restoredProjectId}
-            revealSoundId="projects-tree"
             viewportRoot={motionViewportRoot}
-            withClickSound={withClickSound}
-            withHoverSound={withHoverSound}
           />
         </div>
       </section>
@@ -469,7 +439,6 @@ function HomeScrollContent({
           <SectionNavAnchor sectionId="experience" />
           <AnimatedSectionIntro
             className={`mb-12 max-w-4xl ${sectionIntroClassName}`}
-            soundRevealId="experience-intro"
             motionViewportRoot={motionViewportRoot}
           >
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_58%)]" />
@@ -482,11 +451,7 @@ function HomeScrollContent({
             </div>
           </AnimatedSectionIntro>
           <div className="px-2 md:px-4">
-            <ExperienceTimeline
-              experiences={portfolioData.experience}
-              revealSoundId="experience-timeline"
-              viewportRoot={motionViewportRoot}
-            />
+            <ExperienceTimeline experiences={portfolioData.experience} viewportRoot={motionViewportRoot} />
           </div>
         </div>
       </section>
@@ -497,7 +462,6 @@ function HomeScrollContent({
           <SectionNavAnchor sectionId="education" />
           <AnimatedSectionIntro
             className={`mb-12 max-w-5xl ${sectionIntroClassName}`}
-            soundRevealId="education-intro"
             motionViewportRoot={motionViewportRoot}
           >
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(52,211,153,0.14),transparent_58%)]" />
@@ -522,11 +486,7 @@ function HomeScrollContent({
         <div aria-hidden className="absolute inset-x-0 top-0 h-full bg-[radial-gradient(circle_at_72%_34%,rgba(16,185,129,0.14),transparent_40%)]" />
         <div className="pointer-events-auto relative z-10 max-w-5xl mx-auto">
           <SectionNavAnchor sectionId="contact" />
-          <div
-            data-sound-reveal="sectionSweep"
-            data-sound-reveal-id="contact-panel"
-            className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/[0.58] px-6 py-8 shadow-[0_0_80px_rgba(0,0,0,0.34)] backdrop-blur-xl md:px-10 md:py-10"
-          >
+          <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-black/[0.58] px-6 py-8 shadow-[0_0_80px_rgba(0,0,0,0.34)] backdrop-blur-xl md:px-10 md:py-10">
             <div aria-hidden className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_56%)]" />
             <div className="relative grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
               <div className="text-center lg:text-left">
@@ -559,9 +519,6 @@ function HomeScrollContent({
                     href={getEmailComposeUrl(portfolioData.personal.email)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={withClickSound()}
-                    onMouseEnter={withHoverSound("contact-email")}
-                    onFocus={withHoverSound("contact-email")}
                     className="inline-flex items-center justify-center rounded-full bg-white px-7 py-3.5 text-sm font-bold uppercase tracking-widest text-black transition-all hover:bg-emerald-500 hover:text-white"
                   >
                     <Mail size={16} className="mr-2" /> Email Me
@@ -570,9 +527,6 @@ function HomeScrollContent({
                     href={portfolioData.personal.resume}
                     target="_blank"
                     rel="noopener noreferrer"
-                    onClick={withClickSound()}
-                    onMouseEnter={withHoverSound("contact-resume")}
-                    onFocus={withHoverSound("contact-resume")}
                     className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/[0.03] px-7 py-3.5 text-sm font-bold uppercase tracking-widest text-white transition-all hover:border-emerald-400/35 hover:bg-white/[0.08]"
                   >
                     <FileText size={16} className="mr-2" /> View Resume
@@ -676,8 +630,6 @@ export default function Home() {
   const portfolioData = portfolioProfiles[profileSlug];
   const navigate = useNavigate();
   const isPresent = useIsPresent();
-  const { playCue, reducedMotion, setHomeSoundZone } = useSound();
-  const { withClickSound, withHoverSound } = useSoundInteractions();
   const [isCanvasEnabled, setIsCanvasEnabled] = useState(() => canCreateWebGLContext());
   const [pages, setPages] = useState(1);
   const [sectionRanges, setSectionRanges] = useState<HomeSceneRanges>(defaultHomeSceneRanges);
@@ -1252,7 +1204,6 @@ export default function Home() {
       requestedAt: Date.now(),
     });
 
-    playCue("caseStudyOpen");
     navigate(getProfileProjectPath(profileSlug, projectId), {
       state: createCaseStudyEntryState({
         profileSlug,
@@ -1444,161 +1395,6 @@ export default function Home() {
     };
   }, [heroAnchorX, heroAnchorY, heroIntroProgress, scrollViewportVersion]);
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const root = isCanvasEnabled ? scrollViewportRef.current : null;
-    if (isCanvasEnabled && !root) {
-      return;
-    }
-
-    const sections = getHomeScrollSections(container)
-      .map((section) => {
-        const sectionName = section.dataset.homeScrollSection as HomeScrollSectionForSound | undefined;
-        if (!sectionName || !(sectionName in homeSoundZoneBySection)) {
-          return null;
-        }
-
-        return {
-          element: section,
-          zone: homeSoundZoneBySection[sectionName],
-        };
-      })
-      .filter((entry): entry is { element: HTMLElement; zone: HomeSoundZone } => Boolean(entry));
-
-    if (sections.length === 0) {
-      return;
-    }
-
-    const currentZoneRef = { current: null as HomeSoundZone | null };
-    let pendingZone: { zone: HomeSoundZone; since: number } | null = null;
-    let lastCommittedAt = 0;
-    let frame = 0;
-    let arrivalTimeout: number | null = null;
-
-    const clearArrivalTimeout = () => {
-      if (arrivalTimeout !== null) {
-        window.clearTimeout(arrivalTimeout);
-        arrivalTimeout = null;
-      }
-    };
-
-    const getViewportHeight = () => root?.clientHeight ?? window.innerHeight ?? 1;
-
-    const getScrollTop = () =>
-      root?.scrollTop ??
-      document.scrollingElement?.scrollTop ??
-      window.scrollY ??
-      0;
-
-    const resolveZoneFromScroll = () => {
-      const focusLine = getScrollTop() + getViewportHeight() * homeZoneFocusLineRatio;
-      let activeZone = sections[0]?.zone ?? "hero";
-
-      for (const section of sections) {
-        if (focusLine >= section.element.offsetTop) {
-          activeZone = section.zone;
-        } else {
-          break;
-        }
-      }
-
-      return activeZone;
-    };
-
-    const commitZone = (nextZone: HomeSoundZone, now: number) => {
-      const previousZone = currentZoneRef.current;
-      currentZoneRef.current = nextZone;
-      pendingZone = null;
-      lastCommittedAt = now;
-      setHomeSoundZone(nextZone);
-
-      if (!previousZone || previousZone === nextZone) {
-        clearArrivalTimeout();
-        return;
-      }
-
-      clearArrivalTimeout();
-
-      if (!reducedMotion) {
-        const movingForward = HOME_SOUND_ZONE_INDEX[nextZone] > HOME_SOUND_ZONE_INDEX[previousZone];
-        playCue(movingForward ? "scrollDownTransition" : "scrollUpTransition", { automatic: true });
-        arrivalTimeout = window.setTimeout(() => {
-          if (currentZoneRef.current === nextZone) {
-            playCue("sectionArrival", { automatic: true });
-          }
-          arrivalTimeout = null;
-        }, homeZoneArrivalDelayMs);
-      }
-    };
-
-    const updateZone = () => {
-      const nextZone = resolveZoneFromScroll();
-      const now = window.performance.now();
-
-      if (!currentZoneRef.current) {
-        commitZone(nextZone, now);
-        return;
-      }
-
-      if (nextZone === currentZoneRef.current) {
-        pendingZone = null;
-        return;
-      }
-
-      if (!pendingZone || pendingZone.zone !== nextZone) {
-        pendingZone = { zone: nextZone, since: now };
-        return;
-      }
-
-      if (now - lastCommittedAt < homeZoneChangeCooldownMs) {
-        return;
-      }
-
-      if (now - pendingZone.since >= homeZoneChangeHoldMs) {
-        commitZone(nextZone, now);
-      }
-    };
-
-    const requestZoneUpdate = () => {
-      if (frame) {
-        return;
-      }
-
-      frame = window.requestAnimationFrame(() => {
-        frame = 0;
-        updateZone();
-      });
-    };
-
-    const observer = new ResizeObserver(requestZoneUpdate);
-    sections.forEach((section) => observer.observe(section.element));
-    window.addEventListener("resize", requestZoneUpdate);
-
-    if (root) {
-      root.addEventListener("scroll", requestZoneUpdate, { passive: true });
-    } else {
-      window.addEventListener("scroll", requestZoneUpdate, { passive: true });
-    }
-
-    requestZoneUpdate();
-
-    return () => {
-      if (frame) {
-        window.cancelAnimationFrame(frame);
-      }
-      clearArrivalTimeout();
-      observer.disconnect();
-      window.removeEventListener("resize", requestZoneUpdate);
-      if (root) {
-        root.removeEventListener("scroll", requestZoneUpdate);
-      } else {
-        window.removeEventListener("scroll", requestZoneUpdate);
-      }
-    };
-  }, [isCanvasEnabled, playCue, reducedMotion, scrollViewportVersion, setHomeSoundZone]);
-
   if (!hasValidProfileSlug) {
     return (
       <Navigate
@@ -1635,8 +1431,6 @@ export default function Home() {
                       restoredProjectId={restoredProjectId}
                       sectionIntroClassName={sectionIntroClassName}
                       motionViewportRoot={scrollViewportRef}
-                      withClickSound={withClickSound}
-                      withHoverSound={withHoverSound}
                     />
                   </Scroll>
                 </ScrollControls>
@@ -1656,8 +1450,6 @@ export default function Home() {
             onScrollToSection={scrollToSection}
             restoredProjectId={restoredProjectId}
             sectionIntroClassName={sectionIntroClassName}
-            withClickSound={withClickSound}
-            withHoverSound={withHoverSound}
           />
         </div>
       )}

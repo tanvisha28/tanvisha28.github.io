@@ -19,7 +19,7 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 ### 2026-03-29
 
 - App shell:
-  - `src/App.tsx` wraps the router in `SoundProvider` and keeps `ScrollToTop` at the app shell level.
+  - `src/App.tsx` keeps `ScrollToTop` at the app shell level and owns the route-transition shell.
 - Homepage:
   - `src/pages/Home.tsx` supports both canvas mode and a DOM-only fallback when WebGL setup or canvas rendering fails.
   - Top-level homepage sections are tracked with `data-home-scroll-section` markers and remain the source of truth for scroll measurement.
@@ -27,9 +27,6 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 - 3D layer:
   - `src/components/3d/StoryScene.tsx` combines the hero scene with `HomeLowerScene`.
   - `src/data/homeSceneData.ts` owns measured scene ranges, lower-scene geometry, and responsive tuning constants.
-- Audio layer:
-  - `src/audio/*` owns sound preference persistence, route-aware soundscape state, cue timing, session prompt dismissal, and interaction hooks.
-  - `src/components/SoundToggle.tsx` and `src/components/SoundPrompt.tsx` are exposed through the shared layout chrome.
 - Verification contract:
   - `npm run lint`
   - `npm run build`
@@ -39,14 +36,12 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 
 ### 2026-04-04
 
-- Rebuilt the premium soundscape around deterministic generated assets and scroll-zoned ambience:
-  - `scripts/generate_soundscape.py` now owns the in-repo sound renderer and exports the committed 48 kHz WAV + AAC `.m4a` asset set into `public/audio`
-  - `package.json` now exposes `npm run generate:soundscape` for regenerating the full cinematic soundscape contract
-  - `src/audio/soundConfig.ts` now defines six ambient beds, directional scroll transition cues, a section-arrival cue, source fallbacks per cue, and home-zone timing constants
-  - `src/audio/soundController.ts` and `src/audio/SoundProvider.tsx` now preload the activation cue, prewarm the ambient beds, crossfade between home zones and detail ambience, and stop relying on streamed HTML5 looping for ambient playback
-  - `src/pages/Home.tsx` now maps the measured homepage scroll stack into `hero`, `projects`, `experience`, `education`, and `contact` sound zones using a scroll focus line with hold/cooldown hysteresis instead of one-time section-impact triggers
-  - `src/components/SoundPrompt.tsx` and `src/components/SoundToggle.tsx` now describe the interactive evolving soundscape instead of the earlier generic audio wording
-  - `README.md`, `docs/architecture.md`, and `docs/debugging-runbook.md` now document the generation workflow, expanded asset contract, and the new home-zone runtime behavior
+- Removed the experimental sound system and all repo-level audio contracts:
+  - `src/App.tsx` no longer wraps the router in `SoundProvider`, and the route shell keeps only the visual transition layer
+  - `src/components/Layout.tsx`, `src/pages/Home.tsx`, `src/pages/ProjectDetail.tsx`, and `src/components/HomeSections.tsx` no longer import or fire sound interactions, cues, prompts, or sound-toggle UI
+  - `src/audio/*`, `src/components/SoundPrompt.tsx`, `src/components/SoundToggle.tsx`, `public/audio/*`, and the renderer script were removed from the repo
+  - `package.json` no longer depends on `howler`
+  - `README.md`, `docs/architecture.md`, and `docs/debugging-runbook.md` no longer document an audio runtime or asset contract
 
 ### 2026-04-04
 

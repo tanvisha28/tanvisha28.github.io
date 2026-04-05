@@ -10,9 +10,6 @@ import { useState, useEffect, type MouseEvent, type ReactNode } from "react";
 import type { PortfolioData, ProfileSlug } from "../data/portfolioData";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { SoundToggle } from "./SoundToggle";
-import { SoundPrompt } from "./SoundPrompt";
-import { useSoundInteractions } from "../audio/useSoundInteractions";
 import { getEmailComposeUrl } from "../utils/contact";
 import { getProfileHashPath, getProfileHomePath } from "../utils/profileRoutes";
 import { createHomeRestoreState, hasHomeScrollSnapshot, type PortfolioRouteState } from "../utils/homeScrollState";
@@ -44,7 +41,6 @@ export function Navbar({
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { withClickSound } = useSoundInteractions();
   const navLinks = useProfileNavLinks(profileSlug);
   const homePath = getProfileHomePath(profileSlug);
   const canRestoreHomeScroll = location.pathname !== homePath && hasHomeScrollSnapshot(profileSlug);
@@ -101,7 +97,7 @@ export function Navbar({
     destination: { to: string; state: PortfolioRouteState | undefined },
     onAfterClick?: () => void
   ) =>
-    withClickSound<MouseEvent<HTMLAnchorElement>>((event) => {
+    (event: MouseEvent<HTMLAnchorElement>) => {
       onAfterClick?.();
 
       if (location.pathname !== homePath || !link.hash) {
@@ -117,7 +113,7 @@ export function Navbar({
       }
 
       navigate(destination.to, { state: destination.state });
-    });
+    };
 
   return (
     <nav
@@ -131,7 +127,6 @@ export function Navbar({
         <Link
           to={homePath}
           state={homeRestoreState}
-          onClick={withClickSound()}
           className="text-xl font-bold tracking-tighter text-white"
         >
           {portfolioData.personal.name.split(" ")[0]}
@@ -159,12 +154,10 @@ export function Navbar({
               );
             })()
           ))}
-          <SoundToggle />
           <a
             href={portfolioData.personal.resume}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={withClickSound()}
             className="px-4 py-2 bg-white text-black text-xs font-bold uppercase tracking-widest rounded-full hover:bg-emerald-500 hover:text-white transition-all"
           >
             Resume
@@ -172,8 +165,7 @@ export function Navbar({
         </div>
 
         <div className="flex items-center gap-3 md:hidden">
-          <SoundToggle className="px-3 py-2 text-[10px] tracking-[0.18em]" />
-          <button className="text-white" onClick={withClickSound(() => setIsOpen((current) => !current))}>
+          <button className="text-white" onClick={() => setIsOpen((current) => !current)}>
             {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
@@ -209,7 +201,7 @@ export function Navbar({
               target="_blank"
               rel="noopener noreferrer"
               className="text-lg font-medium text-emerald-400"
-              onClick={withClickSound(() => setIsOpen(false))}
+              onClick={() => setIsOpen(false)}
             >
               Resume
             </a>
@@ -284,7 +276,6 @@ export function Layout({
   return (
     <div className="min-h-screen bg-black text-white selection:bg-emerald-500 selection:text-white font-sans">
       <Navbar profileSlug={profileSlug} portfolioData={portfolioData} />
-      <SoundPrompt />
       <main>{children}</main>
     </div>
   );

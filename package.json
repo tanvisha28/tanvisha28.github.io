@@ -9,7 +9,6 @@
     "build": "vite build",
     "build:pages": "vite build && tsx scripts/build-pages.ts",
     "preview": "vite preview",
-    "generate:soundscape": "python3 scripts/generate_soundscape.py",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit"
   },
@@ -25,7 +24,6 @@
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "framer-motion": "^12.38.0",
-    "howler": "^2.2.4",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
     "postprocessing": "^6.39.0",

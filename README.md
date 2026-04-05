@@ -16,7 +16,6 @@ Useful commands:
 - `npm run lint`: TypeScript typecheck
 - `npm run build`: production build
 - `npm run build:pages`: production build for GitHub Pages, including static route entry points, `404.html`, and `.nojekyll`
-- `npm run generate:soundscape`: deterministically render the cinematic audio asset set into `public/audio`
 - `npm run preview`: preview the built app
 
 ## GitHub Pages Deployment
@@ -106,39 +105,6 @@ Minimum for any meaningful change:
 - `npm run build`
 
 If the UI changed, also manually verify the affected profile homepages, profile-scoped hash navigation, and any affected project detail pages.
-
-## Audio Setup
-
-Render the committed audio asset set with:
-
-1. `npm run generate:soundscape`
-
-The generator uses `python3` plus macOS `afconvert` to synthesize 48 kHz stereo WAV masters and matching AAC `.m4a` web exports for the runtime contract in `public/audio/`.
-
-Required generated basenames:
-
-- `hero-ambient-loop`
-- `projects-ambient-loop`
-- `experience-ambient-loop`
-- `education-ambient-loop`
-- `contact-ambient-loop`
-- `case-study-ambient-loop`
-- `scroll-down-transition`
-- `scroll-up-transition`
-- `sound-activation-cue`
-- `ui-click`
-- `ui-hover`
-- `section-arrival`
-- `case-study-open`
-- `case-study-return`
-
-The cinematic sound layer lives in `src/audio/` and is wired through `SoundProvider`, `useSound`, and the central `soundRegistry`. Audio stays off by default, initializes lazily after opt-in, prewarms the ambient beds, keeps the detail route on a dedicated mission-mode loop, and lets `Home.tsx` drive homepage ambience from scroll zones rather than one static homepage bed.
-
-To retune the system later:
-
-- update `scripts/generate_soundscape.py` for synthesis palette, cue timing, and rendered asset output
-- update `src/audio/soundConfig.ts` for source ordering, volumes, fades, ducking levels, and zone timing
-- update `src/audio/SoundProvider.tsx` and `src/pages/Home.tsx` if the route-to-zone runtime behavior changes
 
 ## Notes On Environment And AI Studio Remnants
 

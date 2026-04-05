@@ -8,8 +8,6 @@ import Home from "./pages/Home";
 import ProjectDetail from "./pages/ProjectDetail";
 import { AnimatePresence, motion } from "motion/react";
 import ScrollToTop from "./components/ScrollToTop";
-import { SoundProvider } from "./audio/SoundProvider";
-import { useSound } from "./audio/useSound";
 import { defaultProfileSlug, isProfileSlug, portfolioProfiles } from "./data/portfolioData";
 import { getProfileHomePath, getProfileProjectPath } from "./utils/profileRoutes";
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
@@ -219,7 +217,6 @@ function AppRoutes() {
   const location = useLocation();
   const currentRouteKind = useMemo(() => getRouteKind(location.pathname), [location.pathname]);
   const previousRouteKindRef = useRef<RouteKind>(currentRouteKind);
-  const { setSoundscapeMode } = useSound();
   const transitionProfile = useMemo(
     () => getRouteTransitionProfile(previousRouteKindRef.current, currentRouteKind, location.pathname),
     [currentRouteKind, location.pathname]
@@ -228,20 +225,6 @@ function AppRoutes() {
   useEffect(() => {
     previousRouteKindRef.current = currentRouteKind;
   }, [currentRouteKind, location.pathname]);
-
-  useEffect(() => {
-    if (currentRouteKind === "home") {
-      setSoundscapeMode("home");
-      return;
-    }
-
-    if (currentRouteKind === "detail") {
-      setSoundscapeMode("detail");
-      return;
-    }
-
-    setSoundscapeMode("off");
-  }, [currentRouteKind, setSoundscapeMode]);
 
   return (
     <AnimatePresence mode="wait">
@@ -260,11 +243,9 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <SoundProvider>
-      <Router basename={routerBase}>
-        <ScrollToTop />
-        <AppRoutes />
-      </Router>
-    </SoundProvider>
+    <Router basename={routerBase}>
+      <ScrollToTop />
+      <AppRoutes />
+    </Router>
   );
 }
