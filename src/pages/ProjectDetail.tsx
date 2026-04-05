@@ -33,6 +33,7 @@ import { defaultProfileSlug, isProfileSlug, portfolioProfiles, type ProfileSlug 
 import { useSoundInteractions } from "../audio/useSoundInteractions";
 import { getProfileHashPath, getProfileHomePath, getProfileProjectPath } from "../utils/profileRoutes";
 import {
+  createHomeRestoreState,
   createCaseStudyEntryState,
   getCaseStudyEntryState,
   markPendingHomeRestore,
@@ -179,7 +180,14 @@ export default function ProjectDetail() {
 
   const backToProjects = () => {
     if (enteredFromHome) {
-      navigate(-1);
+      navigate(getProfileHashPath(profileSlug, "projects"), {
+        replace: true,
+        state: createHomeRestoreState({
+          profileSlug,
+          sourceProjectId: caseStudyEntryState?.sourceProjectId ?? project?.id,
+          reason: "detail-back",
+        }),
+      });
       return;
     }
 

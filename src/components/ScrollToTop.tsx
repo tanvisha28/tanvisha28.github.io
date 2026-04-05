@@ -12,14 +12,15 @@ export default function ScrollToTop() {
 
   useEffect(() => {
     const homeProfileSlug = getProfileSlugFromHomePath(pathname);
-    if (homeProfileSlug && !hash) {
+    if (homeProfileSlug) {
       const explicitRestore = getHomeRestoreState(state);
       const pendingRestore = readPendingHomeRestore(homeProfileSlug);
-      if (explicitRestore?.profileSlug === homeProfileSlug) {
-        return;
-      }
+      const shouldPreserveHomeScroll =
+        Boolean(hash) ||
+        explicitRestore?.profileSlug === homeProfileSlug ||
+        pendingRestore?.profileSlug === homeProfileSlug;
 
-      if (pendingRestore?.profileSlug === homeProfileSlug) {
+      if (shouldPreserveHomeScroll) {
         return;
       }
 

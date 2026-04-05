@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Github, Linkedin, Mail, FileText, Menu, X } from "lucide-react";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, type MouseEvent, type ReactNode } from "react";
 import type { PortfolioData, ProfileSlug } from "../data/portfolioData";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -19,6 +19,8 @@ import { createHomeRestoreState, hasHomeScrollSnapshot, type PortfolioRouteState
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+const HOME_NAV_SCROLL_REQUEST_EVENT = "portfolio-home-nav-request";
 
 function useProfileNavLinks(profileSlug: ProfileSlug) {
   return [
@@ -40,16 +42,23 @@ export function Navbar({
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const { withClickSound } = useSoundInteractions();
   const navLinks = useProfileNavLinks(profileSlug);
   const homePath = getProfileHomePath(profileSlug);
   const canRestoreHomeScroll = location.pathname !== homePath && hasHomeScrollSnapshot(profileSlug);
 
   useEffect(() => {
+    if (location.pathname === homePath) {
+      setScrolled(false);
+      return;
+    }
+
     const handleScroll = () => setScrolled(window.scrollY > 50);
+    handleScroll();
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [homePath, location.pathname]);
 
   const isActiveLink = (hash?: string) => {
     if (location.pathname !== homePath) {
@@ -86,6 +95,29 @@ export function Navbar({
     return { to: link.path, state: undefined as PortfolioRouteState | undefined };
   };
 
+  const handleNavLinkClick = (
+    link: { name: string; path: string; hash?: string },
+    destination: { to: string; state: PortfolioRouteState | undefined },
+    onAfterClick?: () => void
+  ) =>
+    withClickSound<MouseEvent<HTMLAnchorElement>>((event) => {
+      onAfterClick?.();
+
+      if (location.pathname !== homePath || !link.hash) {
+        return;
+      }
+
+      event.preventDefault();
+      const sectionId = link.hash.replace(/^#/, "");
+
+      if (location.hash === link.hash) {
+        window.dispatchEvent(new CustomEvent(HOME_NAV_SCROLL_REQUEST_EVENT, { detail: { sectionId } }));
+        return;
+      }
+
+      navigate(destination.to, { state: destination.state });
+    });
+
   return (
     <nav
       data-site-navbar
@@ -115,7 +147,7 @@ export function Navbar({
                   key={link.name}
                   to={destination.to}
                   state={destination.state}
-                  onClick={withClickSound()}
+                  onClick={handleNavLinkClick(link, destination)}
                   className={cn(
                     "text-sm font-medium transition-colors hover:text-emerald-400",
                     isActiveLink(link.hash) ? "text-emerald-400" : "text-gray-400"
@@ -164,7 +196,7 @@ export function Navbar({
                     to={destination.to}
                     state={destination.state}
                     className="text-lg font-medium text-gray-300"
-                    onClick={withClickSound(() => setIsOpen(false))}
+                    onClick={handleNavLinkClick(link, destination, () => setIsOpen(false))}
                   >
                     {link.name}
                   </Link>

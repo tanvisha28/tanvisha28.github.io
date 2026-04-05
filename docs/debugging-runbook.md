@@ -101,15 +101,21 @@ Check:
 
 ## Failure Mode: Hash Navigation Does Not Reach The Expected Section
 
+Likely causes:
+
+- the pending hash request was allowed to settle before the hidden Drei `ScrollControls` viewport existed or could reach the final target
+- native browser hash-anchor behavior fought the app-owned canvas scroll logic on same-page navbar clicks
+
 Check:
 
 1. The target section `id` and matching section nav anchor still exist in `Home.tsx`.
 2. Navbar links still point to the right hash.
-3. `ScrollViewportBridge` is still capturing the correct scroll viewport element in canvas mode.
-4. `ScrollToTop.tsx` still performs the global top reset for normal route changes, but skips it for valid restoreable home returns. The home page itself still owns hash scrolling.
-5. The route still lands on the expected `/:profileSlug` homepage before the hash-based scroll runs.
-6. The active route should be `/:profileSlug#section`, not an unscoped hash like `/#projects`.
-7. The section target should align below the fixed navbar, not at the padded outer section wrapper.
+3. `ScrollViewportBridge` is still capturing the correct scroll viewport element in canvas mode before pending hash requests are cleared.
+4. In canvas mode, `Home.tsx` should own hash scrolling against the hidden `ScrollControls` viewport. Same-page navbar clicks should not rely on browser-native anchor scrolling.
+5. `ScrollToTop.tsx` still performs the global top reset for normal route changes, but skips it for valid restoreable home returns. The home page itself still owns hash scrolling.
+6. The route still lands on the expected `/:profileSlug` homepage before the hash-based scroll runs.
+7. The active route should be `/:profileSlug#section`, not an unscoped hash like `/#projects`.
+8. The section target should align below the fixed navbar, not at the padded outer section wrapper.
 
 ## Failure Mode: GitHub Pages Direct Routes Return 404
 

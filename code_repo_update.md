@@ -39,10 +39,12 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 
 ### 2026-04-04
 
-- Corrected homepage hash navigation so profile-scoped navbar jumps land on the visible section start instead of the padded section wrapper:
+- Repaired profile-home hash navigation on the GitHub Pages build:
+  - `src/pages/Home.tsx` now keeps canvas hash requests pending until the hidden Drei viewport is ready, then computes section targets from stable homepage-content offsets instead of viewport-rect deltas
+  - `src/components/Layout.tsx` now intercepts same-page profile hash clicks so `Home` owns canvas-mode section scrolling and repeated clicks on the active hash can re-run the jump without relying on browser-native anchors
   - `src/pages/Home.tsx` now uses explicit section nav anchors plus a delayed hash-settle flow that waits until the current scroll container can reach the final target before clearing the pending jump
-  - `src/components/Layout.tsx` now exposes `Education` as a first-class profile hash destination alongside `Projects`, `Experience`, and `Get in Touch`
-  - contributor docs now treat `#education` as part of the supported homepage hash-link contract and document the new anchor-based alignment behavior
+  - `src/components/Layout.tsx` keeps `Education` as a first-class profile hash destination alongside `Projects`, `Experience`, and `Get in Touch`
+  - `docs/debugging-runbook.md` now documents viewport-readiness and native-anchor interference as the primary hash-navigation failure modes, and contributor docs continue to treat `#education` as part of the supported homepage hash-link contract
 
 ### 2026-04-04
 
