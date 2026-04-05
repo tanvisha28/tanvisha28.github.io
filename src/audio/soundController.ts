@@ -1,8 +1,9 @@
 import type { Howl } from "howler";
 import {
+  ambientCues,
   ambientDuckFadeMs,
-  ambientDuckVolume,
   ambientDuckRestoreDelayMs,
+  ambientDuckVolume,
   ambientRestoreFadeMs,
   soundRegistry,
   type AmbientCue,
@@ -17,12 +18,16 @@ function logAudioWarning(message: string, error?: unknown) {
   }
 }
 
+function isAmbientCue(cue: SoundCue): cue is AmbientCue {
+  return ambientCues.includes(cue as AmbientCue);
+}
+
 export class SoundController {
   private module: HowlerModule | null = null;
   private modulePromise: Promise<HowlerModule> | null = null;
   private sounds = new Map<SoundCue, Howl>();
   private activeAmbientCue: AmbientCue | null = null;
-  private ambientTargetVolume = soundRegistry.ambientHome.volume;
+  private ambientTargetVolume = soundRegistry.heroAmbientLoop.volume;
   private ambientStopTimeouts = new Set<number>();
   private duckRestoreTimeout: number | null = null;
 
@@ -72,23 +77,38 @@ export class SoundController {
     const definition = soundRegistry[cue];
 
     const sound = new module.Howl({
-      src: [definition.src],
+      src: definition.src,
       loop: Boolean(definition.loop),
-      preload: cue === "ambientHome" || cue === "ambientDetail",
-      html5: cue === "ambientHome" || cue === "ambientDetail",
-      volume: cue === "ambientHome" || cue === "ambientDetail" ? 0 : definition.volume,
+      preload: definition.preload ?? false,
+      volume: isAmbientCue(cue) ? 0 : definition.volume,
       onloaderror: (_, error) => logAudioWarning(`[audio] Failed to load ${cue}.`, error),
       onplayerror: (_, error) => logAudioWarning(`[audio] Failed to play ${cue}.`, error),
     });
+
+    if (definition.preload) {
+      sound.load();
+    }
 
     this.sounds.set(cue, sound);
     return sound;
   }
 
-  async playTransient(
-    cue: Exclude<SoundCue, "ambientHome" | "ambientDetail">,
-    volume = soundRegistry[cue].volume
-  ) {
+  async prewarm(cues: readonly SoundCue[]) {
+    try {
+      await Promise.all(
+        cues.map(async (cue) => {
+          const sound = await this.getSound(cue);
+          if (sound.state() === "unloaded") {
+            sound.load();
+          }
+        })
+      );
+    } catch (error) {
+      logAudioWarning("[audio] Could not prewarm sounds.", error);
+    }
+  }
+
+  async playTransient(cue: Exclude<SoundCue, AmbientCue>, volume = soundRegistry[cue].volume) {
     try {
       const sound = await this.getSound(cue);
       sound.stop();
@@ -113,7 +133,7 @@ export class SoundController {
       this.ambientTargetVolume = targetVolume;
 
       if (previousCue && previousCue !== cue && previousSound && previousSound.playing()) {
-        const fadeOutMs = soundRegistry[previousCue].fadeOutMs ?? 400;
+        const fadeOutMs = soundRegistry[previousCue].fadeOutMs ?? 420;
         previousSound.fade(previousSound.volume(), 0, fadeOutMs);
         const timeout = window.setTimeout(() => {
           previousSound.stop();
@@ -128,7 +148,7 @@ export class SoundController {
         sound.play();
       }
 
-      sound.fade(sound.volume(), targetVolume, soundRegistry[cue].fadeInMs ?? 1500);
+      sound.fade(sound.volume(), targetVolume, soundRegistry[cue].fadeInMs ?? 1400);
       this.activeAmbientCue = cue;
     } catch (error) {
       logAudioWarning("[audio] Could not start ambient audio.", error);
@@ -153,7 +173,7 @@ export class SoundController {
       }
 
       const currentVolume = sound.volume();
-      const fadeOutMs = soundRegistry[activeAmbientCue].fadeOutMs ?? 400;
+      const fadeOutMs = soundRegistry[activeAmbientCue].fadeOutMs ?? 420;
       sound.fade(currentVolume, 0, fadeOutMs);
 
       const timeout = window.setTimeout(() => {
@@ -181,10 +201,7 @@ export class SoundController {
         return;
       }
       const sound = this.sounds.get(activeAmbientCue);
-      if (!sound) {
-        return;
-      }
-      if (!sound.playing()) {
+      if (!sound || !sound.playing()) {
         return;
       }
 
@@ -203,7 +220,7 @@ export class SoundController {
     this.clearDuckRestoreTimeout();
 
     this.sounds.forEach((sound, cue) => {
-      if (cue === "ambientHome" || cue === "ambientDetail") {
+      if (isAmbientCue(cue)) {
         return;
       }
 

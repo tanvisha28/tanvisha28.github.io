@@ -11,9 +11,12 @@ import { SoundController } from "./soundController";
 import {
   SOUND_PROMPT_SESSION_KEY,
   SOUND_STORAGE_KEY,
+  ambientCues,
+  detailAmbientCue,
+  homeAmbientCueByZone,
+  type HomeSoundZone,
   soundRegistry,
-  soundscapeAmbientCueByMode,
-  type MajorHomeSection,
+  type AmbientCue,
   type SoundCue,
   type SoundscapeMode,
 } from "./soundConfig";
@@ -31,11 +34,11 @@ export interface SoundContextValue {
   toggleSound: () => Promise<void>;
   enableSound: () => Promise<void>;
   dismissSoundPrompt: () => void;
-  playCue: (cue: Exclude<SoundCue, "ambientHome" | "ambientDetail">, options?: PlayCueOptions) => void;
+  playCue: (cue: Exclude<SoundCue, AmbientCue>, options?: PlayCueOptions) => void;
   playClick: () => void;
   playHover: () => void;
   setSoundscapeMode: (mode: SoundscapeMode) => void;
-  markSectionEntered: (section: MajorHomeSection) => void;
+  setHomeSoundZone: (zone: HomeSoundZone) => void;
 }
 
 export const SoundContext = createContext<SoundContextValue | null>(null);
@@ -92,17 +95,21 @@ function writePromptDismissed(value: boolean) {
   window.sessionStorage.setItem(SOUND_PROMPT_SESSION_KEY, String(value));
 }
 
+function isAmbientCue(cue: SoundCue): cue is AmbientCue {
+  return ambientCues.includes(cue as AmbientCue);
+}
+
 export function SoundProvider({ children }: { children: ReactNode }) {
   const reducedMotion = useReducedMotionPreference();
   const coarsePointer = useCoarsePointerPreference();
   const controllerRef = useRef<SoundController | null>(null);
   const cueLastPlayedAtRef = useRef<Partial<Record<SoundCue, number>>>({});
-  const enteredSectionsRef = useRef<Set<MajorHomeSection>>(new Set());
   const enabledRef = useRef(readStoredPreference());
   const reducedMotionRef = useRef(reducedMotion);
   const coarsePointerRef = useRef(coarsePointer);
   const userActivationRef = useRef(false);
   const soundscapeModeRef = useRef<SoundscapeMode>("off");
+  const homeSoundZoneRef = useRef<HomeSoundZone>("hero");
   const [enabled, setEnabled] = useState(enabledRef.current);
   const [ready, setReady] = useState(false);
   const [promptDismissed, setPromptDismissed] = useState(readPromptDismissed());
@@ -126,6 +133,18 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const resolveActiveAmbientCue = useCallback((): AmbientCue | null => {
+    if (soundscapeModeRef.current === "home") {
+      return homeAmbientCueByZone[homeSoundZoneRef.current];
+    }
+
+    if (soundscapeModeRef.current === "detail") {
+      return detailAmbientCue;
+    }
+
+    return null;
+  }, []);
+
   const shouldRunAmbient = useCallback(() => {
     return enabledRef.current && userActivationRef.current && soundscapeModeRef.current !== "off" && !document.hidden;
   }, []);
@@ -137,26 +156,32 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     }
 
     if (shouldRunAmbient()) {
-      const cue = soundscapeAmbientCueByMode[soundscapeModeRef.current as Exclude<SoundscapeMode, "off">];
+      const cue = resolveActiveAmbientCue();
+      if (!cue) {
+        return;
+      }
+
       await controller.startAmbient(cue, resolveCueVolume(cue));
       return;
     }
 
     const shouldPause = soundscapeModeRef.current !== "off" && document.hidden;
     await controller.fadeOutAmbient(shouldPause);
-  }, [resolveCueVolume, shouldRunAmbient]);
+  }, [resolveActiveAmbientCue, resolveCueVolume, shouldRunAmbient]);
 
   const initializeAudio = useCallback(
     async ({ playActivationTone }: { playActivationTone: boolean }) => {
       userActivationRef.current = true;
       const controller = ensureController();
       await controller.ensureReady();
+      await controller.prewarm(["soundActivationCue"]);
       setReady(true);
 
       if (playActivationTone) {
-        await controller.playTransient("activationTone", resolveCueVolume("activationTone"));
+        await controller.playTransient("soundActivationCue", resolveCueVolume("soundActivationCue"));
       }
 
+      void controller.prewarm(ambientCues);
       await syncAmbientState();
     },
     [ensureController, resolveCueVolume, syncAmbientState]
@@ -210,7 +235,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const playCue = useCallback(
-    (cue: Exclude<SoundCue, "ambientHome" | "ambientDetail">, options?: PlayCueOptions) => {
+    (cue: Exclude<SoundCue, AmbientCue>, options?: PlayCueOptions) => {
       if (!enabledRef.current || !userActivationRef.current) {
         return;
       }
@@ -261,7 +286,6 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       enabledRef.current = false;
       setEnabled(false);
       userActivationRef.current = false;
-      enteredSectionsRef.current.clear();
       cueLastPlayedAtRef.current = {};
 
       if (controllerRef.current) {
@@ -277,32 +301,24 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
   const setSoundscapeMode = useCallback(
     (mode: SoundscapeMode) => {
-      const previousMode = soundscapeModeRef.current;
       soundscapeModeRef.current = mode;
-
-      if (mode === "home" && previousMode !== "home") {
-        enteredSectionsRef.current.clear();
-      }
-
       void syncAmbientState();
     },
     [syncAmbientState]
   );
 
-  const markSectionEntered = useCallback(
-    (section: MajorHomeSection) => {
-      if (!enabledRef.current || !userActivationRef.current || reducedMotionRef.current) {
+  const setHomeSoundZone = useCallback(
+    (zone: HomeSoundZone) => {
+      if (homeSoundZoneRef.current === zone) {
         return;
       }
 
-      if (enteredSectionsRef.current.has(section)) {
-        return;
+      homeSoundZoneRef.current = zone;
+      if (soundscapeModeRef.current === "home") {
+        void syncAmbientState();
       }
-
-      enteredSectionsRef.current.add(section);
-      playCue("sectionImpact", { automatic: true });
     },
-    [playCue]
+    [syncAmbientState]
   );
 
   useEffect(() => {
@@ -324,19 +340,19 @@ export function SoundProvider({ children }: { children: ReactNode }) {
       playClick,
       playHover,
       setSoundscapeMode,
-      markSectionEntered,
+      setHomeSoundZone,
     }),
     [
       dismissSoundPrompt,
       enableSound,
       enabled,
-      markSectionEntered,
       playClick,
       playCue,
       playHover,
       promptDismissed,
       ready,
       reducedMotion,
+      setHomeSoundZone,
       setSoundscapeMode,
       toggleSound,
     ]

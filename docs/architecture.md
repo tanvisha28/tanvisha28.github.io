@@ -13,6 +13,7 @@
 - Data model: [`src/data/portfolioData.ts`](../src/data/portfolioData.ts)
 - Homepage lower-scene data and section ranges: [`src/data/homeSceneData.ts`](../src/data/homeSceneData.ts)
 - Audio runtime and hooks: [`src/audio`](../src/audio)
+- Deterministic sound renderer: [`scripts/generate_soundscape.py`](../scripts/generate_soundscape.py)
 - Global styling: [`src/index.css`](../src/index.css)
 - Vite config: [`vite.config.ts`](../vite.config.ts)
 
@@ -63,12 +64,14 @@ The homepage is the most fragile part of the repo because it mixes three systems
 - `Home` also owns the exact home-return contract. Before entering a case study it stores the active profile's current scroll position in session storage, and on a valid return it restores either the hidden canvas viewport or DOM fallback scroll position before normal hero-reset logic runs.
 - Top-level homepage sections are tracked with `data-home-scroll-section` markers. They are the source of truth for both `pages` measurement and section-range measurement.
 - The current homepage section stack for each `/:profileSlug` route is `hero -> about -> skills -> projects -> experience -> education -> contact -> footer`.
+- `Home` also owns the active homepage sound zone. It maps the current scroll focus line into `hero`, `projects`, `experience`, `education`, or `contact`, then asks `SoundProvider` to crossfade to the matching ambient bed.
 - `homeSceneData.ts` owns the lower-scene geometry, responsive density tuning, and default measured section ranges used by `HomeLowerScene`.
 
 ### Why It Is Fragile
 
 - `pages` is derived from measured top-level section offsets/heights plus the scroll viewport height. Breaking the section markers or changing top-level structure can desync the 3D scroll depth from the HTML.
 - `sectionRanges` for `projects`, `experience`, and `contact` are measured from live DOM positions and drive `HomeLowerScene`. If those sections move or resize significantly, the lower-scene pacing changes too.
+- The homepage soundscape now depends on those same section offsets. If section heights or order drift, the audio zone handoff can feel early or late even when the visuals still render.
 - Hero alignment depends on the DOM portrait measurement in `Home.tsx` feeding `heroAnchor`, which `StoryScene` and `HeroScene` use to place the orbit system behind the portrait.
 - `StoryScene` still keeps the hero anchored near `0` and blends the later beats from measured section ranges, so large DOM shifts can still require scene tuning.
 - Interactivity depends on the outer scroll container using `pointer-events-none`, with inner sections opting back into `pointer-events-auto`.
@@ -100,19 +103,25 @@ The homepage is the most fragile part of the repo because it mixes three systems
 - Each active profile's `education` array is a visible homepage section, not just stored background data.
 - Shared nav, footer, resume links, and hash routes stay scoped to the active `profileSlug`.
 - `homeSceneData.ts` drives the lower homepage scene geometry and tuning separately from copy/content.
-- `SoundProvider` owns persisted sound preference, the session-scoped prompt dismissal, user-activation gating, route-aware soundscape mode (`home` / `detail` / `off`), and visibility handling.
-- `App.tsx` maps route kind to the active soundscape mode, so homepage ambience and detail-page ambience switch centrally instead of each page owning ambient start/stop effects.
+- `SoundProvider` owns persisted sound preference, the session-scoped prompt dismissal, user-activation gating, ambient prewarming, route-aware soundscape mode (`home` / `detail` / `off`), active home sound zone selection, and visibility handling.
+- `App.tsx` still maps route kind to the active soundscape mode, while `Home.tsx` selects the active home sound zone from the measured scroll position.
 - `useSoundInteractions` injects click and hover cues into shared UI and homepage interactions.
+- `scripts/generate_soundscape.py` is the source of truth for the committed audio assets. It renders 48 kHz stereo WAV masters plus matching AAC `.m4a` files into `public/audio`.
 - `public/audio` is now a required runtime contract:
-  - `ambient-home-loop.wav`
-  - `ambient-detail-loop.wav`
-  - `activation-tone.m4a`
-  - `ui-click.m4a`
-  - `ui-hover.m4a`
-  - `section-sweep.m4a`
-  - `section-impact.m4a`
-  - `case-study-open.m4a`
-  - `case-study-return.m4a`
+  - `hero-ambient-loop.(wav|m4a)`
+  - `projects-ambient-loop.(wav|m4a)`
+  - `experience-ambient-loop.(wav|m4a)`
+  - `education-ambient-loop.(wav|m4a)`
+  - `contact-ambient-loop.(wav|m4a)`
+  - `case-study-ambient-loop.(wav|m4a)`
+  - `scroll-down-transition.(wav|m4a)`
+  - `scroll-up-transition.(wav|m4a)`
+  - `sound-activation-cue.(wav|m4a)`
+  - `ui-click.(wav|m4a)`
+  - `ui-hover.(wav|m4a)`
+  - `section-arrival.(wav|m4a)`
+  - `case-study-open.(wav|m4a)`
+  - `case-study-return.(wav|m4a)`
 - There is no backend request path in the current UI.
 - AI Studio remnants still exist:
   - `metadata.json`

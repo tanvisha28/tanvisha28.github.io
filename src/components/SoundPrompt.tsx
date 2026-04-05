@@ -27,12 +27,12 @@ export function SoundPrompt() {
                 </div>
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-emerald-300">Cinematic Audio</p>
-                  <p className="mt-1 text-lg font-semibold tracking-tight">Enable the full space-grade soundscape.</p>
+                  <p className="mt-1 text-lg font-semibold tracking-tight">Enable the evolving scroll-reactive soundscape.</p>
                 </div>
               </div>
 
               <p className="mt-3 text-sm leading-relaxed text-gray-300">
-                Ambient atmosphere, section sweeps, and premium transition cues are available once you opt in.
+                Layered ambience, directional section transitions, and premium interaction cues become active once you opt in.
               </p>
 
               <div className="mt-4 flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.22em] text-gray-400">

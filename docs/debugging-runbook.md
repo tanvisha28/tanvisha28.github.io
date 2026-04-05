@@ -139,26 +139,34 @@ Likely causes:
 - missing files in `public/audio/`
 - `SoundProvider` no longer wrapping the app
 - no user-gesture activation
-- stored preference, prompt-dismissal session state, or reduced-motion gating not behaving as expected
+- stored preference, prompt-dismissal session state, ambient prewarm flow, or reduced-motion gating not behaving as expected
 - the active route no longer maps to the correct soundscape mode (`home` vs `detail`)
+- `Home.tsx` no longer updates the active home sound zone from the measured scroll position
 
 Check:
 
 1. [`src/App.tsx`](../src/App.tsx) still wraps the router in `SoundProvider`.
 2. [`src/components/SoundToggle.tsx`](../src/components/SoundToggle.tsx) still calls `toggleSound`, and [`src/components/SoundPrompt.tsx`](../src/components/SoundPrompt.tsx) still calls `enableSound` / `dismissSoundPrompt`.
 3. The expected audio files still exist in `public/audio/`:
-   - `ambient-home-loop.wav`
-   - `ambient-detail-loop.wav`
-   - `activation-tone.m4a`
-   - `ui-click.m4a`
-   - `ui-hover.m4a`
-   - `section-sweep.m4a`
-   - `section-impact.m4a`
-   - `case-study-open.m4a`
-   - `case-study-return.m4a`
-4. `SoundProvider` still waits for user activation before playback, persists opt-in through `SOUND_STORAGE_KEY`, and stores session-only prompt dismissal through `SOUND_PROMPT_SESSION_KEY`.
-5. `src/App.tsx` should still map home routes to the home ambient bed and detail routes to the detail ambient bed.
-6. Automatic section cues are not being mistaken for a full audio outage when reduced motion is enabled.
+   - `hero-ambient-loop.(wav|m4a)`
+   - `projects-ambient-loop.(wav|m4a)`
+   - `experience-ambient-loop.(wav|m4a)`
+   - `education-ambient-loop.(wav|m4a)`
+   - `contact-ambient-loop.(wav|m4a)`
+   - `case-study-ambient-loop.(wav|m4a)`
+   - `scroll-down-transition.(wav|m4a)`
+   - `scroll-up-transition.(wav|m4a)`
+   - `sound-activation-cue.(wav|m4a)`
+   - `ui-click.(wav|m4a)`
+   - `ui-hover.(wav|m4a)`
+   - `section-arrival.(wav|m4a)`
+   - `case-study-open.(wav|m4a)`
+   - `case-study-return.(wav|m4a)`
+4. `npm run generate:soundscape` should recreate that asset set without errors before you debug the runtime.
+5. `SoundProvider` still waits for user activation before playback, persists opt-in through `SOUND_STORAGE_KEY`, stores session-only prompt dismissal through `SOUND_PROMPT_SESSION_KEY`, and prewarms the ambient beds plus activation cue after opt-in.
+6. `src/App.tsx` should still map home routes to `home`, detail routes to `detail`, and everything else to `off`.
+7. `src/pages/Home.tsx` should still map `hero/about/skills` to the `hero` zone and update the active zone from the current scroll focus line rather than one-time `IntersectionObserver` section hits.
+8. Automatic zone-transition cues are not being mistaken for a full audio outage when reduced motion is enabled. Reduced motion should suppress automatic scroll cues, not the ambient bed itself.
 
 ## Failure Mode: Project Detail Shows The Wrong Scene Or Accent
 

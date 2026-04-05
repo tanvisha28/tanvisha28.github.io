@@ -39,6 +39,17 @@ This file is the rolling repo-update index for contributor-facing changes. Updat
 
 ### 2026-04-04
 
+- Rebuilt the premium soundscape around deterministic generated assets and scroll-zoned ambience:
+  - `scripts/generate_soundscape.py` now owns the in-repo sound renderer and exports the committed 48 kHz WAV + AAC `.m4a` asset set into `public/audio`
+  - `package.json` now exposes `npm run generate:soundscape` for regenerating the full cinematic soundscape contract
+  - `src/audio/soundConfig.ts` now defines six ambient beds, directional scroll transition cues, a section-arrival cue, source fallbacks per cue, and home-zone timing constants
+  - `src/audio/soundController.ts` and `src/audio/SoundProvider.tsx` now preload the activation cue, prewarm the ambient beds, crossfade between home zones and detail ambience, and stop relying on streamed HTML5 looping for ambient playback
+  - `src/pages/Home.tsx` now maps the measured homepage scroll stack into `hero`, `projects`, `experience`, `education`, and `contact` sound zones using a scroll focus line with hold/cooldown hysteresis instead of one-time section-impact triggers
+  - `src/components/SoundPrompt.tsx` and `src/components/SoundToggle.tsx` now describe the interactive evolving soundscape instead of the earlier generic audio wording
+  - `README.md`, `docs/architecture.md`, and `docs/debugging-runbook.md` now document the generation workflow, expanded asset contract, and the new home-zone runtime behavior
+
+### 2026-04-04
+
 - Added a route-aware premium soundscape and the runtime audio asset contract:
   - `src/audio/soundConfig.ts` now defines distinct home/detail ambient cues, case-study transition cues, `education` as a first-class major home section, and the required `public/audio/*` asset list
   - `src/audio/SoundProvider.tsx` now owns sound prompt dismissal, route-aware soundscape mode (`home` / `detail` / `off`), mobile-safe cue scaling, and the activation-tone opt-in flow

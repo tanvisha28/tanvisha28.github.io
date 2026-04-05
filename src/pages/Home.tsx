@@ -15,7 +15,16 @@ import { SkillsGrid, ExperienceTimeline, ProjectTree, EducationGrid } from "../c
 import { useLocation, useNavigate, useNavigationType, useParams, Navigate } from "react-router-dom";
 import { Component, useEffect, useMemo, useState, useRef, type ErrorInfo, type ReactNode, type RefObject } from "react";
 import { motion, useIsPresent, useMotionValue } from "motion/react";
-import { majorHomeSections } from "../audio/soundConfig";
+import {
+  homeSoundZoneBySection,
+  homeSoundZones,
+  homeZoneArrivalDelayMs,
+  homeZoneChangeCooldownMs,
+  homeZoneChangeHoldMs,
+  homeZoneFocusLineRatio,
+  type HomeScrollSectionForSound,
+  type HomeSoundZone,
+} from "../audio/soundConfig";
 import { useSound } from "../audio/useSound";
 import { useSoundInteractions, type SoundInteractionHandlers } from "../audio/useSoundInteractions";
 import { getEmailComposeUrl } from "../utils/contact";
@@ -39,6 +48,7 @@ type HomeHashSectionId = (typeof HOME_HASH_SECTION_IDS)[number];
 const HOME_SCROLL_SECTION_SELECTOR = ":scope > [data-home-scroll-section]";
 const HOME_NAV_ANCHOR_BUFFER_PX = 18;
 export const HOME_NAV_SCROLL_REQUEST_EVENT = "portfolio-home-nav-request";
+const HOME_SOUND_ZONE_INDEX = Object.fromEntries(homeSoundZones.map((zone, index) => [zone, index])) as Record<HomeSoundZone, number>;
 
 function isHomeHashSectionId(value: string): value is HomeHashSectionId {
   return HOME_HASH_SECTION_IDS.includes(value as HomeHashSectionId);
@@ -666,7 +676,7 @@ export default function Home() {
   const portfolioData = portfolioProfiles[profileSlug];
   const navigate = useNavigate();
   const isPresent = useIsPresent();
-  const { markSectionEntered, playCue } = useSound();
+  const { playCue, reducedMotion, setHomeSoundZone } = useSound();
   const { withClickSound, withHoverSound } = useSoundInteractions();
   const [isCanvasEnabled, setIsCanvasEnabled] = useState(() => canCreateWebGLContext());
   const [pages, setPages] = useState(1);
@@ -1443,53 +1453,151 @@ export default function Home() {
       return;
     }
 
-    const revealTargets = Array.from(container.querySelectorAll<HTMLElement>("[data-sound-reveal='sectionSweep']"));
-    const sectionTargets = majorHomeSections
-      .map((sectionName) => container.querySelector<HTMLElement>(`[data-home-scroll-section="${sectionName}"]`))
-      .filter((section): section is HTMLElement => Boolean(section));
+    const sections = getHomeScrollSections(container)
+      .map((section) => {
+        const sectionName = section.dataset.homeScrollSection as HomeScrollSectionForSound | undefined;
+        if (!sectionName || !(sectionName in homeSoundZoneBySection)) {
+          return null;
+        }
 
-    if (revealTargets.length === 0 && sectionTargets.length === 0) {
+        return {
+          element: section,
+          zone: homeSoundZoneBySection[sectionName],
+        };
+      })
+      .filter((entry): entry is { element: HTMLElement; zone: HomeSoundZone } => Boolean(entry));
+
+    if (sections.length === 0) {
       return;
     }
 
-    const revealedIds = new Set<string>();
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) {
-            return;
-          }
+    const currentZoneRef = { current: null as HomeSoundZone | null };
+    let pendingZone: { zone: HomeSoundZone; since: number } | null = null;
+    let lastCommittedAt = 0;
+    let frame = 0;
+    let arrivalTimeout: number | null = null;
 
-          const target = entry.target as HTMLElement;
-          const sectionName = target.dataset.homeScrollSection;
-
-          if (
-            sectionName === "projects" ||
-            sectionName === "experience" ||
-            sectionName === "education" ||
-            sectionName === "contact"
-          ) {
-            markSectionEntered(sectionName);
-          }
-
-          const revealId = target.dataset.soundRevealId;
-          if (target.dataset.soundReveal === "sectionSweep" && revealId && !revealedIds.has(revealId)) {
-            revealedIds.add(revealId);
-            playCue("sectionSweep", { automatic: true });
-            observer.unobserve(target);
-          }
-        });
-      },
-      {
-        root,
-        threshold: 0.35,
-        rootMargin: "0px 0px -12% 0px",
+    const clearArrivalTimeout = () => {
+      if (arrivalTimeout !== null) {
+        window.clearTimeout(arrivalTimeout);
+        arrivalTimeout = null;
       }
-    );
+    };
 
-    [...sectionTargets, ...revealTargets].forEach((target) => observer.observe(target));
-    return () => observer.disconnect();
-  }, [isCanvasEnabled, markSectionEntered, playCue, scrollViewportVersion]);
+    const getViewportHeight = () => root?.clientHeight ?? window.innerHeight ?? 1;
+
+    const getScrollTop = () =>
+      root?.scrollTop ??
+      document.scrollingElement?.scrollTop ??
+      window.scrollY ??
+      0;
+
+    const resolveZoneFromScroll = () => {
+      const focusLine = getScrollTop() + getViewportHeight() * homeZoneFocusLineRatio;
+      let activeZone = sections[0]?.zone ?? "hero";
+
+      for (const section of sections) {
+        if (focusLine >= section.element.offsetTop) {
+          activeZone = section.zone;
+        } else {
+          break;
+        }
+      }
+
+      return activeZone;
+    };
+
+    const commitZone = (nextZone: HomeSoundZone, now: number) => {
+      const previousZone = currentZoneRef.current;
+      currentZoneRef.current = nextZone;
+      pendingZone = null;
+      lastCommittedAt = now;
+      setHomeSoundZone(nextZone);
+
+      if (!previousZone || previousZone === nextZone) {
+        clearArrivalTimeout();
+        return;
+      }
+
+      clearArrivalTimeout();
+
+      if (!reducedMotion) {
+        const movingForward = HOME_SOUND_ZONE_INDEX[nextZone] > HOME_SOUND_ZONE_INDEX[previousZone];
+        playCue(movingForward ? "scrollDownTransition" : "scrollUpTransition", { automatic: true });
+        arrivalTimeout = window.setTimeout(() => {
+          if (currentZoneRef.current === nextZone) {
+            playCue("sectionArrival", { automatic: true });
+          }
+          arrivalTimeout = null;
+        }, homeZoneArrivalDelayMs);
+      }
+    };
+
+    const updateZone = () => {
+      const nextZone = resolveZoneFromScroll();
+      const now = window.performance.now();
+
+      if (!currentZoneRef.current) {
+        commitZone(nextZone, now);
+        return;
+      }
+
+      if (nextZone === currentZoneRef.current) {
+        pendingZone = null;
+        return;
+      }
+
+      if (!pendingZone || pendingZone.zone !== nextZone) {
+        pendingZone = { zone: nextZone, since: now };
+        return;
+      }
+
+      if (now - lastCommittedAt < homeZoneChangeCooldownMs) {
+        return;
+      }
+
+      if (now - pendingZone.since >= homeZoneChangeHoldMs) {
+        commitZone(nextZone, now);
+      }
+    };
+
+    const requestZoneUpdate = () => {
+      if (frame) {
+        return;
+      }
+
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        updateZone();
+      });
+    };
+
+    const observer = new ResizeObserver(requestZoneUpdate);
+    sections.forEach((section) => observer.observe(section.element));
+    window.addEventListener("resize", requestZoneUpdate);
+
+    if (root) {
+      root.addEventListener("scroll", requestZoneUpdate, { passive: true });
+    } else {
+      window.addEventListener("scroll", requestZoneUpdate, { passive: true });
+    }
+
+    requestZoneUpdate();
+
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame);
+      }
+      clearArrivalTimeout();
+      observer.disconnect();
+      window.removeEventListener("resize", requestZoneUpdate);
+      if (root) {
+        root.removeEventListener("scroll", requestZoneUpdate);
+      } else {
+        window.removeEventListener("scroll", requestZoneUpdate);
+      }
+    };
+  }, [isCanvasEnabled, playCue, reducedMotion, scrollViewportVersion, setHomeSoundZone]);
 
   if (!hasValidProfileSlug) {
     return (
