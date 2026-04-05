@@ -1094,7 +1094,9 @@ export default function Home() {
           if (!(section instanceof HTMLElement)) return total;
           return Math.max(total, section.offsetTop + section.offsetHeight);
         }, 0);
-        const totalHeight = Math.max(measuredHeight, element.scrollHeight);
+        // Keep ScrollControls aligned to the last top-level section so the page
+        // does not expose dead overscroll space below the footer.
+        const totalHeight = measuredHeight > 0 ? measuredHeight : element.scrollHeight;
         const vh = scrollViewportRef.current?.clientHeight || window.innerHeight || 1;
         setPages(Math.max(1, (totalHeight + 1) / vh));
       });
