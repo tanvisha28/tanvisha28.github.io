@@ -1139,9 +1139,9 @@ const dataScientistProfile: PortfolioData = {
   ],
   experience: [
     {
-      company: "Rutgers University",
-      role: "Graduate Research Assistant",
-      period: "Sep 2025 - Present",
+      company: "Course5 Intelligence",
+      role: "Data Scientist",
+      period: "Jan 2025 - Present",
       description: [
         "Used PCA, ANOVA, and multivariate regression in Python and SAS to extract 15 statistically significant signals from high-dimensional biochemical data.",
         "Built feature engineering and preprocessing workflows with Python and Azure Data Factory to produce model-ready datasets with automated validation and lineage tracking.",
@@ -1161,12 +1161,12 @@ const dataScientistProfile: PortfolioData = {
       skills: ["AWS SageMaker", "Docker", "MLOps", "Feature Engineering", "Forecasting"],
     },
     {
-      company: "Maharashtra State Electricity Board",
-      role: "Data Analyst Intern",
-      period: "Jun 2022 - Dec 2022",
+      company: "Procmart",
+      role: "Data Analyst",
+      period: "Apr 2022 - May 2023",
       description: [
-        "Developed ARIMA and SARIMAX forecasting models in Python using weather and seasonal features to improve electricity demand prediction accuracy by 15%.",
-        "Performed statistical evaluation with MAPE, RMSE, and correlation analysis and surfaced the results in Power BI dashboards for operational teams.",
+        "Analyzed sales, customer, and inventory datasets using SQL and Excel, improving reporting accuracy by 32% while supporting daily operational and business performance analysis workflows efficiently.",
+        "Developed interactive Power BI dashboards tracking revenue trends, reducing manual reporting time by 41% and enabling management teams to monitor key retail performance indicators more effectively.Analyzed retail transaction and procurement datasets using Python and Excel, identifying purchasing trends and inventory optimization opportunities across operations.",
       ],
       skills: ["ARIMA", "SARIMAX", "Python", "Power BI", "Statistical Evaluation"],
     },
