@@ -884,7 +884,7 @@ const dataScientistProfile: PortfolioData = {
       "MLOps and drift monitoring",
       "Interpretability and reporting",
     ],
-    resume: withPublicAsset("Tanvisha Kose (1).pdf"),
+    resume: withPublicAsset("Tanvisha Kose (2).pdf"),
   },
   metrics: [
     { label: "Flight Records", value: "2.15M+" },
