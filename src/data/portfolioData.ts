@@ -1141,7 +1141,7 @@ const dataScientistProfile: PortfolioData = {
     {
       company: "Course5 Intelligence",
       role: "Data Scientist",
-      period: "Jan 2025 - Present",
+      period: "Jan 2026 - Present",
       description: [
         "Used PCA, ANOVA, and multivariate regression in Python and SAS to extract 15 statistically significant signals from high-dimensional biochemical data.",
         "Built feature engineering and preprocessing workflows with Python and Azure Data Factory to produce model-ready datasets with automated validation and lineage tracking.",
