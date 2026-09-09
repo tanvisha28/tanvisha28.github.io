@@ -912,6 +912,86 @@ const dataScientistProfile: PortfolioData = {
   ],
   projects: [
     {
+  id: "nyc-film-permits-analytics",
+  title: "NYC Film Permits Analytics",
+  type: "Analytics",
+  typeLabel: "Data Analytics & Visualization",
+  icon: "film",
+  summary: "An exploratory data analytics project analyzing 18K+ NYC film permit records to uncover filming trends, geographic hotspots, and differences in filming intensity across boroughs and community districts.",
+  role: "Data Analyst",
+  domain: "Public Data / Geographic Analytics",
+  techStack: ["Python", "Pandas", "SQL", "Tableau", "Data Cleaning", "Exploratory Data Analysis", "Geographic Analysis"],
+  problem: "NYC film permit data contains thousands of records across different locations and time periods, making it difficult to identify where filming activity is concentrated, how it changes over time, and which areas experience relatively high filming intensity.",
+  context: "Built as a data analytics project using NYC Open Data to transform raw film permit records into a structured dataset and an interactive Tableau story focused on geographic patterns, trends, and comparable district-level metrics.",
+  stakes: "Simple permit counts can be misleading because community districts differ substantially in population size and geographic characteristics. A combination of trend analysis, geographic analysis, and normalized metrics was needed to make meaningful comparisons.",
+  ownership: [
+    "Owned the end-to-end data cleaning, analysis, metric development, and visualization workflow.",
+    "Prepared permit data for borough and community-district analysis by resolving malformed records and standardizing geographic information.",
+    "Designed the analytical framework and Tableau story to communicate geographic patterns, trends, and key findings clearly."
+  ],
+  goals: [
+    "Identify the NYC boroughs and community districts with the highest filming activity.",
+    "Understand how filming activity changed across years and geographic areas.",
+    "Develop normalized metrics that allow more meaningful comparisons between districts.",
+    "Translate the analysis into clear visual insights and actionable recommendations."
+  ],
+  architecture: "NYC Open Data -> Data Cleaning & Validation -> Exploratory Analysis -> Geographic & Time-Based Analysis -> Metric Development -> Tableau Dashboard & Story",
+  implementation: [
+    "Cleaned and analyzed 18K+ NYC film permit records, resolving malformed records and preparing the data for analysis.",
+    "Filtered and structured permit records for borough and community-district analysis.",
+    "Developed metrics including permits per 1,000 residents to compare filming intensity across districts with different population sizes.",
+    "Built an interactive Tableau dashboard/story covering borough activity, community-district hotspots, growth and decline, and permit intensity."
+  ],
+  decisions: [
+    {
+      title: "Geographic drill-down",
+      detail: "Analyzed filming activity at both borough and community-district levels to move from broad citywide patterns to specific geographic hotspots."
+    },
+    {
+      title: "Population-normalized comparison",
+      detail: "Used permits per 1,000 residents to compare filming intensity across districts without relying only on raw permit counts."
+    },
+    {
+      title: "Story-driven visualization",
+      detail: "Structured the Tableau dashboard as a narrative that moves from the overall NYC filming landscape to geographic concentration, trends, and recommendations."
+    }
+  ],
+  flow: "NYC Open Data -> Cleaning & Validation -> Borough Analysis -> Community District Analysis -> Normalized Metrics -> Tableau Story -> Insights & Recommendations",
+  challenges: [
+    "Cleaning inconsistent and malformed records while preserving useful permit information.",
+    "Comparing districts with substantially different population sizes and levels of filming activity.",
+    "Turning multiple dimensions of geographic and time-based analysis into a clear, easy-to-understand visual story."
+  ],
+  impactMetrics: [
+    {
+      label: "Records Analyzed",
+      value: "18K+",
+      detail: "NYC film permit records cleaned and analyzed across multiple years and geographic areas."
+    },
+    {
+      label: "Geographic Levels",
+      value: "Borough + CD",
+      detail: "Filming activity analyzed at both borough and community-district levels."
+    },
+    {
+      label: "Normalized Metric",
+      value: "Per 1K",
+      detail: "Permits per 1,000 residents used to make district-level comparisons more meaningful."
+    }
+  ],
+  outcomes: [
+    "Identified major filming hotspots across NYC, including strong activity in Brooklyn Community District 1.",
+    "Highlighted changes in filming activity across boroughs and community districts over time.",
+    "Created population-normalized metrics that provided additional context beyond raw permit counts.",
+    "Translated analytical findings into concise recommendations through an interactive Tableau story."
+  ],
+  lessons: [
+    "Good data analysis requires more than counting records; normalization and context can significantly change how geographic patterns are interpreted.",
+    "Interactive visualization helps turn complex location and time-based data into findings that are easier for stakeholders to understand and act on.",
+    "Clear analytical storytelling is important when presenting multiple metrics and geographic comparisons to a non-technical audience."
+  ],
+},
+    {
       id: "speech-translation-connector",
       title: "Speech-to-Speech Translation with Connector Architecture",
       type: "AI",
